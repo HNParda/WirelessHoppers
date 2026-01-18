@@ -1,4 +1,4 @@
-name: Wireless Hoppers
+name: WirelessHoppers
 version: '1.0'
 main: com.hnp_arda.wireless_hoppers.Main
-api-version: '1.21'
+api-version: '1.21.5'
