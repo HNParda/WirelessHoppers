@@ -42,7 +42,13 @@ final class HopperData {
         if (payload == null || payload.length == 0) {
             return null;
         }
-        return deserialize(block.getLocation(), payload);
+        try {
+            return deserialize(block.getLocation(), payload);
+        } catch (RuntimeException ex) {
+            HopperData fresh = new HopperData(block.getLocation());
+            fresh.save(block);
+            return fresh;
+        }
     }
 
     static boolean isEmpty(ItemStack[] items) {
@@ -78,13 +84,23 @@ final class HopperData {
     private static HopperData newDeserialize(Location location, byte[] data) {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
              DataInputStream in = new DataInputStream(inputStream)) {
+            int magic = in.readInt();
+            if (magic != MAGIC) {
+                throw new IllegalStateException("Invalid hopper data format");
+            }
             HopperData hopperData = new HopperData(location);
             int filterCount = in.readInt();
+            if (filterCount < 0 || filterCount > FILTER_SLOTS) {
+                throw new IllegalStateException("Invalid filter count: " + filterCount);
+            }
             ItemStack[] filters = new ItemStack[filterCount];
             for (int i = 0; i < filterCount; i++) {
                 filters[i] = readItemStack(in);
             }
             int bufferCount = in.readInt();
+            if (bufferCount < 0 || bufferCount > BUFFER_SLOTS) {
+                throw new IllegalStateException("Invalid buffer count: " + bufferCount);
+            }
             ItemStack[] buffer = new ItemStack[bufferCount];
             for (int i = 0; i < bufferCount; i++) {
                 buffer[i] = readItemStack(in);
@@ -205,9 +221,30 @@ final class HopperData {
         if (length < 0) {
             return null;
         }
+        if (length == 0) {
+            return null;
+        }
+        if (length > 2_000_000) {
+            return null;
+        }
         byte[] bytes = new byte[length];
         in.readFully(bytes);
-        return ItemStack.deserializeBytes(bytes);
+        if (!isValidItemStackBytes(bytes)) {
+            return null;
+        }
+        try {
+            return ItemStack.deserializeBytes(bytes);
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static boolean isValidItemStackBytes(byte[] bytes) {
+        if (bytes.length < 2) {
+            return false;
+        }
+        return (bytes[0] == (byte) 0x1F && bytes[1] == (byte) 0x8B)
+            || (bytes[0] == (byte) 0x28 && bytes[1] == (byte) 0xB5);
     }
 
     record TargetInfo(UUID worldId, int x, int y, int z, String inventoryType) {

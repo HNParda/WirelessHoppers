@@ -60,7 +60,6 @@ final class HopperScheduler implements Runnable {
                 processed++;
                 continue;
             }
-            syncFromOpenGui(pos, data);
             processHopper(data);
             syncToOpenGui(pos, data);
             UpgradeTier tier = data.upgradeTier();
@@ -95,32 +94,6 @@ final class HopperScheduler implements Runnable {
         }
     }
 
-    private void syncFromOpenGui(HopperRegistry.HopperPos pos, HopperData data) {
-        org.bukkit.inventory.Inventory inventory = registry.getOpenInventory(pos);
-        if (inventory == null) {
-            return;
-        }
-        data.setBuffer(HopperGui.readBuffer(inventory));
-        ItemStack upgrade = inventory.getItem(HopperGui.UPGRADE_SLOT);
-        if (upgrade != null && !upgrade.getType().isAir() && !WirelessItems.isUpgrade(upgrade)) {
-            upgrade = null;
-        }
-        if (upgrade != null) {
-            WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade));
-        }
-        data.setUpgradeItem(HopperGui.cloneSingle(upgrade));
-        ItemStack target = inventory.getItem(HopperGui.TARGET_SLOT);
-        if (target != null && !target.getType().isAir() && !WirelessItems.isTargetTool(target)) {
-            target = null;
-        }
-        data.setTargetItem(HopperGui.cloneSingle(target));
-        if (target != null) {
-            data.setTargetInfo(TargetTool.readTarget(target));
-        } else {
-            data.setTargetInfo(null);
-        }
-    }
-
     private void syncToOpenGui(HopperRegistry.HopperPos pos, HopperData data) {
         org.bukkit.inventory.Inventory inventory = registry.getOpenInventory(pos);
         if (inventory == null) {
@@ -137,14 +110,14 @@ final class HopperScheduler implements Runnable {
             return false;
         }
         Block block = data.location().getBlock();
-        BoundingBox box = BoundingBox.of(block.getLocation().add(0.5, 1.0, 0.5), 0.5, 0.5, 0.5);
+        BoundingBox box = new BoundingBox(block.getX(), block.getY() + 1.0, block.getZ(), block.getX() + 1.0, block.getY() + 2.0, block.getZ() + 1.0);
         HopperRegistry.ChunkKey key = HopperRegistry.ChunkKey.fromBlock(block);
         List<Item> items = itemIndex.getItemsInChunk(key);
         for (Item itemEntity : items) {
             if (itemEntity.isDead() || !itemEntity.isValid()) {
                 continue;
             }
-            if (!box.contains(itemEntity.getLocation().toVector())) {
+            if (!box.overlaps(itemEntity.getBoundingBox())) {
                 continue;
             }
             ItemStack stack = itemEntity.getItemStack();

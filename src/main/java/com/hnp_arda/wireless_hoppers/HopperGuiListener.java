@@ -45,6 +45,7 @@ final class HopperGuiListener implements Listener {
                         current.setAmount(remaining);
                         event.setCurrentItem(current);
                     }
+                    scheduleFullSync(top, pos);
                     event.setCancelled(true);
                     return;
                 }
@@ -58,6 +59,7 @@ final class HopperGuiListener implements Listener {
                         current.setAmount(remaining);
                         event.setCurrentItem(current);
                     }
+                    scheduleFullSync(top, pos);
                     event.setCancelled(true);
                     return;
                 }
@@ -67,6 +69,7 @@ final class HopperGuiListener implements Listener {
                 } else {
                     event.setCurrentItem(remaining);
                 }
+                scheduleFullSync(event.getView().getTopInventory(), pos);
                 event.setCancelled(true);
             }
             return;
@@ -119,7 +122,7 @@ final class HopperGuiListener implements Listener {
                 }
                 event.setCancelled(true);
             }
-            scheduleUpgradeTargetSync(event.getInventory(), pos);
+            scheduleFullSync(event.getInventory(), pos);
             return;
         }
         if (rawSlot == HopperGui.TARGET_SLOT) {
@@ -142,10 +145,11 @@ final class HopperGuiListener implements Listener {
                 }
                 event.setCancelled(true);
             }
-            scheduleUpgradeTargetSync(event.getInventory(), pos);
+            scheduleFullSync(event.getInventory(), pos);
             return;
         }
         if (HopperGui.isBufferSlot(rawSlot)) {
+            scheduleFullSync(event.getInventory(), pos);
             return;
         }
         event.setCancelled(true);
@@ -174,9 +178,10 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder)) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
             return;
         }
+        boolean touchesBuffer = false;
         for (int slot : event.getRawSlots()) {
             if (slot >= event.getView().getTopInventory().getSize()) {
                 continue;
@@ -189,6 +194,10 @@ final class HopperGuiListener implements Listener {
                 event.setCancelled(true);
                 return;
             }
+            touchesBuffer = true;
+        }
+        if (touchesBuffer) {
+            scheduleFullSync(event.getInventory(), pos);
         }
     }
 
@@ -262,12 +271,13 @@ final class HopperGuiListener implements Listener {
         data.save(data.location().getBlock());
     }
 
-    private void scheduleUpgradeTargetSync(Inventory inventory, HopperRegistry.HopperPos pos) {
+    private void scheduleFullSync(Inventory inventory, HopperRegistry.HopperPos pos) {
         org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
             HopperData data = registry.get(pos);
             if (data == null) {
                 return;
             }
+            data.setBuffer(HopperGui.readBuffer(inventory));
             ItemStack upgrade = inventory.getItem(HopperGui.UPGRADE_SLOT);
             if (upgrade != null && !upgrade.getType().isAir() && !WirelessItems.isUpgrade(upgrade)) {
                 upgrade = null;

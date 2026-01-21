@@ -43,7 +43,6 @@ final class WirelessHopperListener implements Listener {
             WirelessHopperBlock.markWirelessHopper(block);
             HopperData data = new HopperData(block.getLocation());
             data.save(block);
-            registry.register(block);
             return;
         }
         event.setCancelled(true);
@@ -150,10 +149,14 @@ final class WirelessHopperListener implements Listener {
         if (data == null) {
             data = HopperData.load(block);
             if (data == null) {
-                return;
+                data = new HopperData(block.getLocation());
+                data.save(block);
             }
         }
         HopperRegistry.HopperPos pos = HopperRegistry.HopperPos.fromBlock(block);
+        if (registry.get(pos) == null) {
+            registry.register(block);
+        }
         event.getPlayer().openInventory(registry.openInventory(pos, data));
         event.setCancelled(true);
     }
