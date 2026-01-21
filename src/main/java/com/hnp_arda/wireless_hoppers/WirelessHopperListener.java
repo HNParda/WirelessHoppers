@@ -186,7 +186,7 @@ final class WirelessHopperListener implements Listener {
 
     @EventHandler
     public void onCraft(CraftItemEvent event) {
-        if (event.getRecipe() == null || event.getCurrentItem() == null) {
+        if (event.getCurrentItem() == null) {
             return;
         }
         if (event.getCurrentItem().getType() != Material.WARPED_SLAB) {

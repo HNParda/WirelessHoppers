@@ -6,12 +6,14 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.jspecify.annotations.NonNull;
 
 final class WirelessHopperCommand implements CommandExecutor, TabCompleter {
     private final ResourcePackManager resourcePackManager;
@@ -21,7 +23,7 @@ final class WirelessHopperCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NonNull [] args) {
         if (args.length == 1 && args[0].equalsIgnoreCase("pack")) {
             if (!(sender instanceof Player player)) {
                 sender.sendMessage(Component.text("Only players can use this command.", NamedTextColor.RED));
@@ -87,7 +89,7 @@ final class WirelessHopperCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String @NonNull [] args) {
         List<String> suggestions = new ArrayList<>();
         if (args.length == 1) {
             suggestions.add("give");

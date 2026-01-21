@@ -15,13 +15,13 @@ final class TargetTool {
     private TargetTool() {
     }
 
-    static ItemStack writeTarget(ItemStack tool, BlockState state) {
+    static void writeTarget(ItemStack tool, BlockState state) {
         if (tool == null || state == null) {
-            return tool;
+            return;
         }
         ItemMeta meta = tool.getItemMeta();
         if (meta == null) {
-            return tool;
+            return;
         }
         Location loc = state.getLocation();
         String inventoryType = state instanceof org.bukkit.inventory.InventoryHolder holder
@@ -36,7 +36,6 @@ final class TargetTool {
             Component.text("x" + loc.getBlockX() + " y" + loc.getBlockY() + " z" + loc.getBlockZ(), NamedTextColor.GRAY)
         ));
         tool.setItemMeta(meta);
-        return tool;
     }
 
     static HopperData.TargetInfo readTarget(ItemStack tool) {

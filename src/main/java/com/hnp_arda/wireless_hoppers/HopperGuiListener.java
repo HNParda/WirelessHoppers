@@ -21,10 +21,9 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder holder)) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
             return;
         }
-        HopperRegistry.HopperPos pos = holder.pos();
         HopperData data = registry.get(pos);
         int rawSlot = event.getRawSlot();
         if (rawSlot >= event.getView().getTopInventory().getSize()) {
@@ -34,7 +33,8 @@ final class HopperGuiListener implements Listener {
                     return;
                 }
                 Inventory top = event.getView().getTopInventory();
-                if (WirelessItems.isUpgrade(current) && (top.getItem(HopperGui.UPGRADE_SLOT) == null || top.getItem(HopperGui.UPGRADE_SLOT).getType().isAir())) {
+                ItemStack upgradeSlot = top.getItem(HopperGui.UPGRADE_SLOT);
+                if (WirelessItems.isUpgrade(current) && (upgradeSlot == null || upgradeSlot.getType().isAir())) {
                     ItemStack moved = HopperGui.cloneSingle(current);
                     WirelessItems.applyUpgradeLore(moved, WirelessItems.getUpgradeTier(moved));
                     top.setItem(HopperGui.UPGRADE_SLOT, moved);
@@ -48,7 +48,8 @@ final class HopperGuiListener implements Listener {
                     event.setCancelled(true);
                     return;
                 }
-                if (WirelessItems.isTargetTool(current) && (top.getItem(HopperGui.TARGET_SLOT) == null || top.getItem(HopperGui.TARGET_SLOT).getType().isAir())) {
+                ItemStack targetSlot = top.getItem(HopperGui.TARGET_SLOT);
+                if (WirelessItems.isTargetTool(current) && (targetSlot == null || targetSlot.getType().isAir())) {
                     top.setItem(HopperGui.TARGET_SLOT, HopperGui.cloneSingle(current));
                     int remaining = current.getAmount() - 1;
                     if (remaining <= 0) {
@@ -81,7 +82,7 @@ final class HopperGuiListener implements Listener {
             }
             int index = rawSlot - HopperGui.FILTER_START;
             ItemStack cursor = event.getCursor();
-            if (cursor == null || cursor.getType().isAir()) {
+            if (cursor.getType().isAir()) {
                 data.filters()[index] = null;
                 data.save(data.location().getBlock());
             } else if (event.isLeftClick() || event.isRightClick()) {
@@ -94,13 +95,13 @@ final class HopperGuiListener implements Listener {
         }
         if (rawSlot == HopperGui.TOGGLE_SLOT) {
             event.setCancelled(true);
-            toggleMode(event.getInventory(), holder.pos());
+            toggleMode(event.getInventory(), pos);
             return;
         }
         if (rawSlot == HopperGui.UPGRADE_SLOT) {
             ItemStack cursor = event.getCursor();
             ItemStack current = event.getCurrentItem();
-            if (cursor != null && !cursor.getType().isAir() && !WirelessItems.isUpgrade(cursor)) {
+            if (!cursor.getType().isAir() && !WirelessItems.isUpgrade(cursor)) {
                 event.setCancelled(true);
                 return;
             }
@@ -118,13 +119,13 @@ final class HopperGuiListener implements Listener {
                 }
                 event.setCancelled(true);
             }
-            scheduleUpgradeTargetSync(event.getInventory(), holder.pos());
+            scheduleUpgradeTargetSync(event.getInventory(), pos);
             return;
         }
         if (rawSlot == HopperGui.TARGET_SLOT) {
             ItemStack cursor = event.getCursor();
             ItemStack current = event.getCurrentItem();
-            if (cursor != null && !cursor.getType().isAir() && !WirelessItems.isTargetTool(cursor)) {
+            if (!cursor.getType().isAir() && !WirelessItems.isTargetTool(cursor)) {
                 event.setCancelled(true);
                 return;
             }
@@ -141,10 +142,10 @@ final class HopperGuiListener implements Listener {
                 }
                 event.setCancelled(true);
             }
-            scheduleUpgradeTargetSync(event.getInventory(), holder.pos());
+            scheduleUpgradeTargetSync(event.getInventory(), pos);
             return;
         }
-        if (HopperGui.isBufferSlot(rawSlot) || HopperGui.isFilterSlot(rawSlot)) {
+        if (HopperGui.isBufferSlot(rawSlot)) {
             return;
         }
         event.setCancelled(true);
@@ -193,10 +194,9 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder holder)) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
             return;
         }
-        HopperRegistry.HopperPos pos = holder.pos();
         HopperData data = registry.get(pos);
         if (data == null) {
             registry.closeInventory(pos);
@@ -239,7 +239,7 @@ final class HopperGuiListener implements Listener {
                 .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         }
         data.setTargetItem(HopperGui.cloneSingle(targetItem));
-        if (targetItem != null && WirelessItems.isTargetTool(targetItem)) {
+        if (targetItem != null) {
             HopperData.TargetInfo info = TargetTool.readTarget(targetItem);
             data.setTargetInfo(info);
         } else {

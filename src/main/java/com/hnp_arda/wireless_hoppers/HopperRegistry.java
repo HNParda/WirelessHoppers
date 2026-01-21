@@ -2,17 +2,11 @@ package com.hnp_arda.wireless_hoppers;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 final class HopperRegistry {
     private final HopperStorage storage;
@@ -30,10 +24,6 @@ final class HopperRegistry {
 
     Set<ChunkKey> activeChunks() {
         return new HashSet<>(hoppersByChunk.keySet());
-    }
-
-    Set<HopperPos> hoppersInChunk(ChunkKey key) {
-        return hoppersByChunk.getOrDefault(key, Set.of());
     }
 
     HopperData get(HopperPos pos) {
@@ -128,9 +118,6 @@ final class HopperRegistry {
             return new HopperPos(loc.getWorld().getUID(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
         }
 
-        Location toLocation(World world) {
-            return new Location(world, x, y, z);
-        }
     }
 
     record ChunkKey(UUID worldId, int x, int z) {

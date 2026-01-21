@@ -4,10 +4,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.type.Hopper;
 import org.bukkit.entity.Item;
-import org.bukkit.block.BlockFace;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -24,10 +24,10 @@ final class HopperScheduler implements Runnable {
 
     private final HopperRegistry registry;
     private final ItemIndex itemIndex;
+    private final Map<HopperRegistry.HopperPos, Long> nextTransferTick = new HashMap<>();
     private long tickCounter = 0L;
     private int hopperCursor = 0;
     private List<HopperRegistry.HopperPos> hopperList = List.of();
-    private final Map<HopperRegistry.HopperPos, Long> nextTransferTick = new HashMap<>();
 
     HopperScheduler(HopperRegistry registry, ItemIndex itemIndex) {
         this.registry = registry;
@@ -114,7 +114,7 @@ final class HopperScheduler implements Runnable {
             target = null;
         }
         data.setTargetItem(HopperGui.cloneSingle(target));
-        if (target != null && WirelessItems.isTargetTool(target)) {
+        if (target != null) {
             data.setTargetInfo(TargetTool.readTarget(target));
         } else {
             data.setTargetInfo(null);
@@ -148,7 +148,7 @@ final class HopperScheduler implements Runnable {
                 continue;
             }
             ItemStack stack = itemEntity.getItemStack();
-            if (!isAllowedByFilter(data, stack)) {
+            if (blockedByFilter(data, stack)) {
                 continue;
             }
             ItemStack remaining = insertIntoBuffer(data.buffer(), stack);
@@ -195,12 +195,12 @@ final class HopperScheduler implements Runnable {
                 continue;
             }
             Inventory inventory = holder.getInventory();
-            for (int i = 0; i < inventory.getSize() && moved < limit; i++) {
+            for (int i = 0; i < inventory.getSize(); i++) {
                 ItemStack item = inventory.getItem(i);
                 if (item == null || item.getType().isAir()) {
                     continue;
                 }
-                if (!isAllowedByFilter(data, item)) {
+                if (blockedByFilter(data, item)) {
                     continue;
                 }
                 int remaining = limit - moved;
@@ -258,7 +258,7 @@ final class HopperScheduler implements Runnable {
             if (item == null || item.getType().isAir()) {
                 continue;
             }
-            if (!isAllowedByFilter(data, item)) {
+            if (blockedByFilter(data, item)) {
                 continue;
             }
             int remainingCapacity = limit - moved;
@@ -323,9 +323,9 @@ final class HopperScheduler implements Runnable {
         return remaining;
     }
 
-    private boolean isAllowedByFilter(HopperData data, ItemStack stack) {
+    private boolean blockedByFilter(HopperData data, ItemStack stack) {
         if (HopperData.isEmpty(data.filters())) {
-            return true;
+            return false;
         }
         boolean strict = data.hasStrictMatch();
         boolean match = false;
@@ -338,6 +338,6 @@ final class HopperScheduler implements Runnable {
                 break;
             }
         }
-        return data.isWhitelist() ? match : !match;
+        return data.isWhitelist() != match;
     }
 }

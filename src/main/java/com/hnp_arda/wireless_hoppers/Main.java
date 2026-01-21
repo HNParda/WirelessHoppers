@@ -9,8 +9,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 
 public final class Main extends JavaPlugin implements Listener {
     private HopperRegistry registry;
-    private HopperScheduler scheduler;
-    private ItemIndex itemIndex;
     private ResourcePackManager resourcePackManager;
     private HopperStorage storage;
 
@@ -22,8 +20,8 @@ public final class Main extends JavaPlugin implements Listener {
         storage.load();
         WirelessHopperBlock.init(storage);
         registry = new HopperRegistry(storage);
-        itemIndex = new ItemIndex();
-        scheduler = new HopperScheduler(registry, itemIndex);
+        ItemIndex itemIndex = new ItemIndex();
+        HopperScheduler scheduler = new HopperScheduler(registry, itemIndex);
         resourcePackManager = new ResourcePackManager(this);
         resourcePackManager.ensurePackReady();
 

@@ -22,13 +22,6 @@ final class WirelessHopperBlock {
         return storage.contains(block);
     }
 
-    static boolean hasMarker(Block block) {
-        if (storage == null || block == null || block.getType() != Material.WARPED_SLAB) {
-            return false;
-        }
-        return storage.contains(block);
-    }
-
     static void markWirelessHopper(Block block) {
         if (block.getType() != Material.WARPED_SLAB) {
             block.setType(Material.WARPED_SLAB, false);

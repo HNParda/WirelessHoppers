@@ -75,7 +75,10 @@ final class ResourcePackManager {
     }
 
     void ensurePackReady() {
-        plugin.getDataFolder().mkdirs();
+        File dataFolder = plugin.getDataFolder();
+        if (!dataFolder.exists() && !dataFolder.mkdirs()) {
+            plugin.getLogger().warning("Failed to create data folder: " + dataFolder.getAbsolutePath());
+        }
         if (!packReady) {
             try {
                 buildZip();
@@ -100,7 +103,7 @@ final class ResourcePackManager {
     void prompt(Player player) {
         ensurePackReady();
         String url = resolvedUrl();
-        if (url == null || url.isBlank()) {
+        if (url.isBlank()) {
             player.sendMessage(Component.text("Resource pack URL is not configured.", net.kyori.adventure.text.format.NamedTextColor.RED));
             return;
         }
@@ -108,7 +111,7 @@ final class ResourcePackManager {
         boolean required = plugin.getConfig().getBoolean("resource-pack-required", false);
         boolean useSha1 = plugin.getConfig().getBoolean("resource-pack-use-sha1", true);
         String prompt = plugin.getConfig().getString("resource-pack-prompt", "WirelessHopper Resource Pack");
-        if (!useSha1 || hash == null || hash.isBlank()) {
+        if (!useSha1 || hash.isBlank()) {
             player.setResourcePack(url, null, Component.text(prompt), required);
         } else {
             player.setResourcePack(url, hexToBytes(hash), Component.text(prompt), required);
@@ -124,7 +127,7 @@ final class ResourcePackManager {
 
     private String resolvedUrl() {
         String url = plugin.getConfig().getString("resource-pack-url", "");
-        if (url != null && !url.isBlank()) {
+        if (!url.isBlank()) {
             return url;
         }
         String host = plugin.getConfig().getString("resource-pack-host", "localhost");
@@ -134,8 +137,8 @@ final class ResourcePackManager {
     }
 
     private void buildZip() throws IOException {
-        if (packFile.exists()) {
-            packFile.delete();
+        if (packFile.exists() && !packFile.delete()) {
+            plugin.getLogger().warning("Failed to delete old resource pack zip: " + packFile.getAbsolutePath());
         }
         try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(packFile))) {
             for (String path : RESOURCE_FILES) {

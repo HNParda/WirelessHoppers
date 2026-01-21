@@ -1,7 +1,6 @@
 package com.hnp_arda.wireless_hoppers;
 
 import org.bukkit.Chunk;
-import org.bukkit.Location;
 import org.bukkit.block.Block;
 
 import java.io.BufferedInputStream;
@@ -53,7 +52,10 @@ final class HopperStorage {
     }
 
     void save() {
-        file.getParentFile().mkdirs();
+        File parent = file.getParentFile();
+        if (parent != null && !parent.exists() && !parent.mkdirs()) {
+            throw new IllegalStateException("Failed to create data folder: " + parent.getAbsolutePath());
+        }
         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)))) {
             out.writeInt(data.size());
             for (Map.Entry<HopperRegistry.HopperPos, byte[]> entry : data.entrySet()) {

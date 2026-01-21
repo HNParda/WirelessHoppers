@@ -53,8 +53,10 @@ final class RecipeManager {
         java.util.Iterator<Recipe> iterator = Bukkit.recipeIterator();
         while (iterator.hasNext()) {
             Recipe recipe = iterator.next();
-            if (recipe == null || recipe.getResult() == null) {
+            if (recipe == null) {
                 continue;
+            } else {
+                recipe.getResult();
             }
             if (recipe.getResult().getType() == Material.WARPED_SLAB) {
                 iterator.remove();

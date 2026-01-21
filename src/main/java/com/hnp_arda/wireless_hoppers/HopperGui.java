@@ -10,6 +10,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +106,6 @@ final class HopperGui {
                 Component.text("Left-click with item to set", NamedTextColor.DARK_GRAY)
             ));
             meta.getPersistentDataContainer().set(Keys.FILTER_PANE, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
-            meta.setCustomModelData(1301);
             pane.setItemMeta(meta);
             return pane;
         }
@@ -136,7 +136,6 @@ final class HopperGui {
 
     static List<ItemStack> statusItems(HopperData data) {
         List<ItemStack> items = new ArrayList<>();
-        UpgradeTier tier = data.upgradeTier();
         items.add(statusItem("Upgrade",
             upgradeLore(data)));
         items.add(statusItem("Target",
@@ -255,8 +254,8 @@ final class HopperGui {
     record HopperGuiHolder(HopperRegistry.HopperPos pos) implements InventoryHolder {
 
         @Override
-            public Inventory getInventory() {
-                return null;
-            }
+        public @NonNull Inventory getInventory() {
+            return Bukkit.createInventory(this, SIZE);
         }
+    }
 }

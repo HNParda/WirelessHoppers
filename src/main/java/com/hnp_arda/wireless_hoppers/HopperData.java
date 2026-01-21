@@ -5,8 +5,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import org.jspecify.annotations.NonNull;
 
 import java.io.ByteArrayInputStream;
@@ -62,27 +62,42 @@ final class HopperData {
         return normalized;
     }
 
-    static ItemStack firstItem(ItemStack[] items) {
-        if (items == null || items.length == 0) {
-            return null;
-        }
-        ItemStack first = items[0];
-        return first != null && first.getType() != Material.AIR ? first : null;
-    }
+    private static final int MAGIC = 0x574831;
 
     private static HopperData deserialize(Location location, byte[] data) {
+        if (data.length < 4) {
+            throw new IllegalStateException("Invalid hopper data format");
+        }
+        int magic = ((data[0] & 0xFF) << 24) | ((data[1] & 0xFF) << 16) | ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
+        if (magic != MAGIC) {
+            throw new IllegalStateException("Invalid hopper data format");
+        }
+        return newDeserialize(location, data);
+    }
+
+    private static HopperData newDeserialize(Location location, byte[] data) {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
-             BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream)) {
+             DataInputStream in = new DataInputStream(inputStream)) {
             HopperData hopperData = new HopperData(location);
-            hopperData.filters = normalizeSize((ItemStack[]) dataInput.readObject(), FILTER_SLOTS);
-            hopperData.buffer = normalizeSize((ItemStack[]) dataInput.readObject(), BUFFER_SLOTS);
-            hopperData.upgradeItem = (ItemStack) dataInput.readObject();
-            hopperData.targetItem = (ItemStack) dataInput.readObject();
-            hopperData.whitelist = dataInput.readBoolean();
-            String target = dataInput.readUTF();
+            int filterCount = in.readInt();
+            ItemStack[] filters = new ItemStack[filterCount];
+            for (int i = 0; i < filterCount; i++) {
+                filters[i] = readItemStack(in);
+            }
+            int bufferCount = in.readInt();
+            ItemStack[] buffer = new ItemStack[bufferCount];
+            for (int i = 0; i < bufferCount; i++) {
+                buffer[i] = readItemStack(in);
+            }
+            hopperData.filters = normalizeSize(filters, FILTER_SLOTS);
+            hopperData.buffer = normalizeSize(buffer, BUFFER_SLOTS);
+            hopperData.upgradeItem = readItemStack(in);
+            hopperData.targetItem = readItemStack(in);
+            hopperData.whitelist = in.readBoolean();
+            String target = in.readUTF();
             hopperData.targetInfo = target.isEmpty() ? null : TargetInfo.fromString(target);
             return hopperData;
-        } catch (IOException | ClassNotFoundException ex) {
+        } catch (IOException ex) {
             throw new IllegalStateException("Failed to deserialize hopper data", ex);
         }
     }
@@ -119,10 +134,6 @@ final class HopperData {
         return targetInfo;
     }
 
-    void setFilters(ItemStack[] filters) {
-        this.filters = filters;
-    }
-
     void setBuffer(ItemStack[] buffer) {
         this.buffer = buffer;
     }
@@ -157,18 +168,46 @@ final class HopperData {
 
     private byte[] serialize() {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-             BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream)) {
-            dataOutput.writeObject(filters);
-            dataOutput.writeObject(buffer);
-            dataOutput.writeObject(upgradeItem);
-            dataOutput.writeObject(targetItem);
-            dataOutput.writeBoolean(whitelist);
-            dataOutput.writeUTF(targetInfo == null ? "" : targetInfo.toString());
-            dataOutput.flush();
+             DataOutputStream out = new DataOutputStream(outputStream)) {
+            out.writeInt(MAGIC);
+            out.writeInt(1);
+            out.writeInt(filters.length);
+            for (ItemStack item : filters) {
+                writeItemStack(out, item);
+            }
+            out.writeInt(buffer.length);
+            for (ItemStack item : buffer) {
+                writeItemStack(out, item);
+            }
+            writeItemStack(out, upgradeItem);
+            writeItemStack(out, targetItem);
+            out.writeBoolean(whitelist);
+            out.writeUTF(targetInfo == null ? "" : targetInfo.toString());
+            out.flush();
             return outputStream.toByteArray();
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to serialize hopper data", ex);
         }
+    }
+
+    private static void writeItemStack(DataOutputStream out, ItemStack item) throws IOException {
+        if (item == null || item.getType().isAir()) {
+            out.writeInt(-1);
+            return;
+        }
+        byte[] bytes = item.serializeAsBytes();
+        out.writeInt(bytes.length);
+        out.write(bytes);
+    }
+
+    private static ItemStack readItemStack(DataInputStream in) throws IOException {
+        int length = in.readInt();
+        if (length < 0) {
+            return null;
+        }
+        byte[] bytes = new byte[length];
+        in.readFully(bytes);
+        return ItemStack.deserializeBytes(bytes);
     }
 
     record TargetInfo(UUID worldId, int x, int y, int z, String inventoryType) {
