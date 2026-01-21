@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "type=bottom,waterlogged=false": { "model": "wirelesshopper:block/wireless_hopper" },
+    "type=bottom,waterlogged=true": { "model": "wirelesshopper:block/wireless_hopper" },
+    "type=top,waterlogged=false": { "model": "wirelesshopper:block/wireless_hopper" },
+    "type=top,waterlogged=true": { "model": "wirelesshopper:block/wireless_hopper" },
+    "type=double,waterlogged=false": { "model": "wirelesshopper:block/wireless_hopper" },
+    "type=double,waterlogged=true": { "model": "wirelesshopper:block/wireless_hopper" }
+  }
+}

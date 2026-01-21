@@ -1,0 +1,9 @@
+resource-pack-url: ""
+resource-pack-host: "localhost"
+resource-pack-bind: "0.0.0.0"
+resource-pack-port: 8123
+resource-pack-sha1: ""
+resource-pack-use-sha1: true
+resource-pack-prompt: "WirelessHopper Resource Pack"
+resource-pack-required: false
+resource-pack-auto-on-join: true

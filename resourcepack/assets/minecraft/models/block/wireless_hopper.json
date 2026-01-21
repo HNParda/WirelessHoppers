@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:block/hopper",
+  "textures": {
+    "top": "minecraft:block/wireless_hopper_top",
+    "side": "minecraft:block/wireless_hopper",
+    "inside": "minecraft:block/wireless_hopper_inside",
+    "bottom": "minecraft:block/wireless_hopper"
+  }
+}

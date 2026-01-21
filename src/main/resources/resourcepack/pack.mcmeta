@@ -1,0 +1,7 @@
+{
+  "pack": {
+    "pack_format": 55,
+    "description": "WirelessHopper resources",
+    "supported_formats": [55]
+  }
+}

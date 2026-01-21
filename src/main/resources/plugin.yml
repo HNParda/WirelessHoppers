@@ -1,4 +1,22 @@
-name: WirelessHoppers
-version: '1.0'
+name: WirelessHopper
+version: '${version}'
 main: com.hnp_arda.wireless_hoppers.Main
-api-version: '1.21.5'
+api-version: '1.20'
+permissions:
+  wirelesshopper.place:
+    description: Allows placing Wireless Hoppers.
+    default: op
+  wirelesshopper.use:
+    description: Allows using and breaking Wireless Hoppers.
+    default: op
+  wirelesshopper.give:
+    description: Allows giving Wireless Hopper items.
+    default: op
+  wirelesshopper.pack:
+    description: Allows prompting the resource pack.
+    default: op
+
+commands:
+  wirelesshopper:
+    description: Wireless Hopper commands.
+    usage: /wirelesshopper give <player> <item> | /wirelesshopper pack
