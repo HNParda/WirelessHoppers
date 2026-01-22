@@ -21,6 +21,9 @@ import java.util.Set;
 final class HopperScheduler implements Runnable {
     private static final int MAX_HOPPERS_PER_TICK = 200;
     private static final int ITEM_INDEX_REFRESH_TICKS = 10;
+    private static final BlockFace[] HOPPER_PULL_FACES = new BlockFace[]{
+        BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST
+    };
 
     private final HopperRegistry registry;
     private final ItemIndex itemIndex;
@@ -44,7 +47,9 @@ final class HopperScheduler implements Runnable {
             return;
         }
         if (hopperCursor >= hopperList.size()) {
-            hopperList = registry.allHoppers().stream().map(data -> HopperRegistry.HopperPos.fromBlock(data.location().getBlock())).toList();
+            hopperList = registry.allHoppers().stream()
+                .map(data -> HopperRegistry.HopperPos.fromBlock(data.location().getBlock()))
+                .toList();
             hopperCursor = 0;
         }
         int processed = 0;
@@ -70,11 +75,11 @@ final class HopperScheduler implements Runnable {
     }
 
     private void refreshItemIndex() {
+        Set<HopperRegistry.ChunkKey> activeChunks = registry.activeChunks();
+        if (activeChunks.isEmpty()) {
+            return;
+        }
         for (World world : Bukkit.getWorlds()) {
-            Set<HopperRegistry.ChunkKey> activeChunks = registry.activeChunks();
-            if (activeChunks.isEmpty()) {
-                continue;
-            }
             itemIndex.update(world, activeChunks);
         }
     }
@@ -95,7 +100,7 @@ final class HopperScheduler implements Runnable {
     }
 
     private void syncToOpenGui(HopperRegistry.HopperPos pos, HopperData data) {
-        org.bukkit.inventory.Inventory inventory = registry.getOpenInventory(pos);
+        Inventory inventory = registry.getOpenInventory(pos);
         if (inventory == null) {
             return;
         }
@@ -105,14 +110,17 @@ final class HopperScheduler implements Runnable {
     }
 
     private boolean pickupGroundItems(HopperData data) {
-        boolean changed = false;
         if (isBufferFull(data.buffer())) {
             return false;
         }
         Block block = data.location().getBlock();
-        BoundingBox box = new BoundingBox(block.getX(), block.getY() + 1.0, block.getZ(), block.getX() + 1.0, block.getY() + 2.0, block.getZ() + 1.0);
+        BoundingBox box = new BoundingBox(
+            block.getX(), block.getY() + 1.0, block.getZ(),
+            block.getX() + 1.0, block.getY() + 2.0, block.getZ() + 1.0
+        );
         HopperRegistry.ChunkKey key = HopperRegistry.ChunkKey.fromBlock(block);
         List<Item> items = itemIndex.getItemsInChunk(key);
+        boolean changed = false;
         for (Item itemEntity : items) {
             if (itemEntity.isDead() || !itemEntity.isValid()) {
                 continue;
@@ -146,7 +154,7 @@ final class HopperScheduler implements Runnable {
         int limit = data.upgradeTier() == null ? 1 : data.upgradeTier().itemsPerTransfer();
         int moved = 0;
         boolean changed = false;
-        for (BlockFace face : new BlockFace[]{BlockFace.UP, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST}) {
+        for (BlockFace face : HOPPER_PULL_FACES) {
             if (moved >= limit || isBufferFull(data.buffer())) {
                 break;
             }

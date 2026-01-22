@@ -26,133 +26,159 @@ final class HopperGuiListener implements Listener {
         }
         HopperData data = registry.get(pos);
         int rawSlot = event.getRawSlot();
-        if (rawSlot >= event.getView().getTopInventory().getSize()) {
+        int topSize = event.getView().getTopInventory().getSize();
+
+        if (rawSlot >= topSize) {
             if (event.isShiftClick()) {
-                ItemStack current = event.getCurrentItem();
-                if (current == null || current.getType().isAir()) {
-                    return;
-                }
-                Inventory top = event.getView().getTopInventory();
-                ItemStack upgradeSlot = top.getItem(HopperGui.UPGRADE_SLOT);
-                if (WirelessItems.isUpgrade(current) && (upgradeSlot == null || upgradeSlot.getType().isAir())) {
-                    ItemStack moved = HopperGui.cloneSingle(current);
-                    WirelessItems.applyUpgradeLore(moved, WirelessItems.getUpgradeTier(moved));
-                    top.setItem(HopperGui.UPGRADE_SLOT, moved);
-                    int remaining = current.getAmount() - 1;
-                    if (remaining <= 0) {
-                        event.setCurrentItem(null);
-                    } else {
-                        current.setAmount(remaining);
-                        event.setCurrentItem(current);
-                    }
-                    scheduleFullSync(top, pos);
-                    event.setCancelled(true);
-                    return;
-                }
-                ItemStack targetSlot = top.getItem(HopperGui.TARGET_SLOT);
-                if (WirelessItems.isTargetTool(current) && (targetSlot == null || targetSlot.getType().isAir())) {
-                    top.setItem(HopperGui.TARGET_SLOT, HopperGui.cloneSingle(current));
-                    int remaining = current.getAmount() - 1;
-                    if (remaining <= 0) {
-                        event.setCurrentItem(null);
-                    } else {
-                        current.setAmount(remaining);
-                        event.setCurrentItem(current);
-                    }
-                    scheduleFullSync(top, pos);
-                    event.setCancelled(true);
-                    return;
-                }
-                ItemStack remaining = moveIntoBuffer(event.getView().getTopInventory(), current);
-                if (remaining == null || remaining.getAmount() == 0) {
-                    event.setCurrentItem(null);
-                } else {
-                    event.setCurrentItem(remaining);
-                }
-                scheduleFullSync(event.getView().getTopInventory(), pos);
-                event.setCancelled(true);
+                handleShiftFromPlayer(event, pos);
             }
             return;
         }
+
         if (HopperGui.isStatusSlot(rawSlot)) {
             event.setCancelled(true);
             return;
         }
+
         if (HopperGui.isFilterSlot(rawSlot)) {
             event.setCancelled(true);
-            if (data == null) {
-                return;
-            }
-            int index = rawSlot - HopperGui.FILTER_START;
-            ItemStack cursor = event.getCursor();
-            if (cursor.getType().isAir()) {
-                data.filters()[index] = null;
-                data.save(data.location().getBlock());
-            } else if (event.isLeftClick() || event.isRightClick()) {
-                data.filters()[index] = HopperGui.cloneSingle(cursor);
-                data.save(data.location().getBlock());
-            }
-            event.getInventory().setItem(rawSlot, HopperGui.filterDisplay(index, data.filters()[index]));
-            HopperGui.writeStatus(event.getInventory(), data);
+            handleFilterClick(event, data, rawSlot);
             return;
         }
+
         if (rawSlot == HopperGui.TOGGLE_SLOT) {
             event.setCancelled(true);
             toggleMode(event.getInventory(), pos);
             return;
         }
+
         if (rawSlot == HopperGui.UPGRADE_SLOT) {
-            ItemStack cursor = event.getCursor();
-            ItemStack current = event.getCurrentItem();
-            if (!cursor.getType().isAir() && !WirelessItems.isUpgrade(cursor)) {
-                event.setCancelled(true);
-                return;
-            }
-            if (event.isShiftClick() && current != null && !current.getType().isAir()) {
-                ItemStack moving = HopperGui.cloneSingle(current);
-                WirelessItems.applyUpgradeLore(moving, WirelessItems.getUpgradeTier(moving));
-                Player player = (Player) event.getWhoClicked();
-                if (player.getInventory().addItem(moving).isEmpty()) {
-                    event.setCurrentItem(null);
-                    if (data != null) {
-                        data.setUpgradeItem(null);
-                        data.save(data.location().getBlock());
-                        HopperGui.writeStatus(event.getInventory(), data);
-                    }
-                }
-                event.setCancelled(true);
-            }
-            scheduleFullSync(event.getInventory(), pos);
+            handleUpgradeSlot(event, pos, data);
             return;
         }
+
         if (rawSlot == HopperGui.TARGET_SLOT) {
-            ItemStack cursor = event.getCursor();
-            ItemStack current = event.getCurrentItem();
-            if (!cursor.getType().isAir() && !WirelessItems.isTargetTool(cursor)) {
-                event.setCancelled(true);
-                return;
-            }
-            if (event.isShiftClick() && current != null && !current.getType().isAir()) {
-                Player player = (Player) event.getWhoClicked();
-                if (player.getInventory().addItem(HopperGui.cloneSingle(current)).isEmpty()) {
-                    event.setCurrentItem(null);
-                    if (data != null) {
-                        data.setTargetItem(null);
-                        data.setTargetInfo(null);
-                        data.save(data.location().getBlock());
-                        HopperGui.writeStatus(event.getInventory(), data);
-                    }
-                }
-                event.setCancelled(true);
-            }
-            scheduleFullSync(event.getInventory(), pos);
+            handleTargetSlot(event, pos, data);
             return;
         }
+
         if (HopperGui.isBufferSlot(rawSlot)) {
             scheduleFullSync(event.getInventory(), pos);
             return;
         }
+
         event.setCancelled(true);
+    }
+
+    private void handleShiftFromPlayer(InventoryClickEvent event, HopperRegistry.HopperPos pos) {
+        ItemStack current = event.getCurrentItem();
+        if (current == null || current.getType().isAir()) {
+            return;
+        }
+        Inventory top = event.getView().getTopInventory();
+
+        ItemStack upgradeSlot = top.getItem(HopperGui.UPGRADE_SLOT);
+        if (WirelessItems.isUpgrade(current) && (upgradeSlot == null || upgradeSlot.getType().isAir())) {
+            ItemStack moved = HopperGui.cloneSingle(current);
+            WirelessItems.applyUpgradeLore(moved, WirelessItems.getUpgradeTier(moved));
+            top.setItem(HopperGui.UPGRADE_SLOT, moved);
+            decrementCurrent(event, current);
+            scheduleFullSync(top, pos);
+            event.setCancelled(true);
+            return;
+        }
+
+        ItemStack targetSlot = top.getItem(HopperGui.TARGET_SLOT);
+        if (WirelessItems.isTargetTool(current) && (targetSlot == null || targetSlot.getType().isAir())) {
+            top.setItem(HopperGui.TARGET_SLOT, HopperGui.cloneSingle(current));
+            decrementCurrent(event, current);
+            scheduleFullSync(top, pos);
+            event.setCancelled(true);
+            return;
+        }
+
+        ItemStack remaining = moveIntoBuffer(top, current);
+        if (remaining == null || remaining.getAmount() == 0) {
+            event.setCurrentItem(null);
+        } else {
+            event.setCurrentItem(remaining);
+        }
+        scheduleFullSync(top, pos);
+        event.setCancelled(true);
+    }
+
+    private void decrementCurrent(InventoryClickEvent event, ItemStack current) {
+        int remaining = current.getAmount() - 1;
+        if (remaining <= 0) {
+            event.setCurrentItem(null);
+        } else {
+            current.setAmount(remaining);
+            event.setCurrentItem(current);
+        }
+    }
+
+    private void handleFilterClick(InventoryClickEvent event, HopperData data, int rawSlot) {
+        if (data == null) {
+            return;
+        }
+        int index = rawSlot - HopperGui.FILTER_START;
+        ItemStack cursor = event.getCursor();
+        if (cursor.getType().isAir()) {
+            data.filters()[index] = null;
+            data.save(data.location().getBlock());
+        } else if (event.isLeftClick() || event.isRightClick()) {
+            data.filters()[index] = HopperGui.cloneSingle(cursor);
+            data.save(data.location().getBlock());
+        }
+        event.getInventory().setItem(rawSlot, HopperGui.filterDisplay(index, data.filters()[index]));
+        HopperGui.writeStatus(event.getInventory(), data);
+    }
+
+    private void handleUpgradeSlot(InventoryClickEvent event, HopperRegistry.HopperPos pos, HopperData data) {
+        ItemStack cursor = event.getCursor();
+        ItemStack current = event.getCurrentItem();
+        if (!cursor.getType().isAir() && !WirelessItems.isUpgrade(cursor)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (event.isShiftClick() && current != null && !current.getType().isAir()) {
+            ItemStack moving = HopperGui.cloneSingle(current);
+            WirelessItems.applyUpgradeLore(moving, WirelessItems.getUpgradeTier(moving));
+            Player player = (Player) event.getWhoClicked();
+            if (player.getInventory().addItem(moving).isEmpty()) {
+                event.setCurrentItem(null);
+                if (data != null) {
+                    data.setUpgradeItem(null);
+                    data.save(data.location().getBlock());
+                    HopperGui.writeStatus(event.getInventory(), data);
+                }
+            }
+            event.setCancelled(true);
+        }
+        scheduleFullSync(event.getInventory(), pos);
+    }
+
+    private void handleTargetSlot(InventoryClickEvent event, HopperRegistry.HopperPos pos, HopperData data) {
+        ItemStack cursor = event.getCursor();
+        ItemStack current = event.getCurrentItem();
+        if (!cursor.getType().isAir() && !WirelessItems.isTargetTool(cursor)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (event.isShiftClick() && current != null && !current.getType().isAir()) {
+            Player player = (Player) event.getWhoClicked();
+            if (player.getInventory().addItem(HopperGui.cloneSingle(current)).isEmpty()) {
+                event.setCurrentItem(null);
+                if (data != null) {
+                    data.setTargetItem(null);
+                    data.setTargetInfo(null);
+                    data.save(data.location().getBlock());
+                    HopperGui.writeStatus(event.getInventory(), data);
+                }
+            }
+            event.setCancelled(true);
+        }
+        scheduleFullSync(event.getInventory(), pos);
     }
 
     private ItemStack moveIntoBuffer(Inventory top, ItemStack stack) {
@@ -216,11 +242,13 @@ final class HopperGuiListener implements Listener {
             return;
         }
         Player player = (Player) event.getPlayer();
+
         ItemStack[] buffer = new ItemStack[HopperData.BUFFER_SLOTS];
         for (int i = HopperGui.BUFFER_START; i <= HopperGui.BUFFER_END; i++) {
             buffer[i] = top.getItem(i);
         }
         data.setBuffer(buffer);
+
         ItemStack upgrade = top.getItem(HopperGui.UPGRADE_SLOT);
         if (upgrade != null && !upgrade.getType().isAir() && !WirelessItems.isUpgrade(upgrade)) {
             upgrade = null;
@@ -236,6 +264,7 @@ final class HopperGuiListener implements Listener {
                 .forEach(leftover -> player.getWorld().dropItemNaturally(player.getLocation(), leftover));
         }
         data.setUpgradeItem(HopperGui.cloneSingle(upgrade));
+
         ItemStack targetItem = top.getItem(HopperGui.TARGET_SLOT);
         if (targetItem != null && !targetItem.getType().isAir() && !WirelessItems.isTargetTool(targetItem)) {
             targetItem = null;
@@ -249,8 +278,7 @@ final class HopperGuiListener implements Listener {
         }
         data.setTargetItem(HopperGui.cloneSingle(targetItem));
         if (targetItem != null) {
-            HopperData.TargetInfo info = TargetTool.readTarget(targetItem);
-            data.setTargetInfo(info);
+            data.setTargetInfo(TargetTool.readTarget(targetItem));
         } else {
             data.setTargetInfo(null);
         }
@@ -278,6 +306,7 @@ final class HopperGuiListener implements Listener {
                 return;
             }
             data.setBuffer(HopperGui.readBuffer(inventory));
+
             ItemStack upgrade = inventory.getItem(HopperGui.UPGRADE_SLOT);
             if (upgrade != null && !upgrade.getType().isAir() && !WirelessItems.isUpgrade(upgrade)) {
                 upgrade = null;

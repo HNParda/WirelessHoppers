@@ -35,7 +35,7 @@ final class HopperData {
     }
 
     static HopperData load(Block block) {
-        if (block.getType() != Material.WARPED_SLAB) {
+        if (block.getType() != Material.TUFF_SLAB) {
             return null;
         }
         byte[] payload = WirelessHopperBlock.readData(block);
@@ -175,7 +175,7 @@ final class HopperData {
     }
 
     void save(Block block) {
-        if (block.getType() != Material.WARPED_SLAB) {
+        if (block.getType() != Material.TUFF_SLAB) {
             WirelessHopperBlock.clear(block);
             return;
         }

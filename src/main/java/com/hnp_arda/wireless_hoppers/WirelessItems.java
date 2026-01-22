@@ -26,7 +26,7 @@ final class WirelessItems {
     }
 
     static ItemStack createHopperItem() {
-        ItemStack item = new ItemStack(Material.WARPED_SLAB);
+        ItemStack item = new ItemStack(Material.TUFF_SLAB);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Wireless Hopper", NamedTextColor.GOLD));
         meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), MODEL_HOPPER));

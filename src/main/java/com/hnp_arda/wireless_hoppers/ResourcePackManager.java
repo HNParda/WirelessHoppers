@@ -23,7 +23,7 @@ import java.util.zip.ZipOutputStream;
 final class ResourcePackManager {
     private static final List<String> RESOURCE_FILES = List.of(
             "resourcepack/pack.mcmeta",
-            "resourcepack/assets/minecraft/blockstates/warped_slab.json",
+            "resourcepack/assets/minecraft/blockstates/tuff_slab.json",
             "resourcepack/assets/wirelesshopper/models/block/wireless_hopper.json",
             "resourcepack/assets/wirelesshopper/textures/block/wireless_hopper.png",
             "resourcepack/assets/wirelesshopper/textures/block/wireless_hopper_top.png",

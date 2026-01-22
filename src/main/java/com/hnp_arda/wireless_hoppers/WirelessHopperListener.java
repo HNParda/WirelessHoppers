@@ -7,6 +7,7 @@ import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
@@ -31,7 +32,7 @@ final class WirelessHopperListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlockPlaced();
         ItemStack item = event.getItemInHand();
-        if (block.getType() != Material.WARPED_SLAB) {
+        if (block.getType() != Material.TUFF_SLAB) {
             return;
         }
         if (WirelessItems.isWirelessHopper(item)) {
@@ -46,7 +47,7 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(Component.text("Warped slabs are reserved for Wireless Hoppers.", NamedTextColor.RED));
+        event.getPlayer().sendMessage(Component.text("Tuff slabs are reserved for Wireless Hoppers.", NamedTextColor.RED));
     }
 
     @EventHandler
@@ -125,7 +126,7 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         ItemStack item = event.getItem();
-        if (event.getPlayer().isSneaking() && item != null && item.getType().isBlock() && block.getType() == Material.WARPED_SLAB) {
+        if (event.getPlayer().isSneaking() && item != null && item.getType().isBlock() && block.getType() == Material.TUFF_SLAB) {
             return;
         }
         if (WirelessItems.isTargetTool(item) && block.getState() instanceof org.bukkit.inventory.InventoryHolder) {
@@ -134,7 +135,7 @@ final class WirelessHopperListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (block.getType() != Material.WARPED_SLAB) {
+        if (block.getType() != Material.TUFF_SLAB) {
             return;
         }
         if (!WirelessHopperBlock.isWirelessHopper(block)) {
@@ -162,6 +163,18 @@ final class WirelessHopperListener implements Listener {
     }
 
     @EventHandler
+    public void onBlockDamage(BlockDamageEvent event) {
+        Block block = event.getBlock();
+        if (!WirelessHopperBlock.isWirelessHopper(block)) {
+            return;
+        }
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        if (tool.getType() == Material.AIR || !tool.getType().name().endsWith("_PICKAXE")) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onRedstone(BlockRedstoneEvent event) {
         Block block = event.getBlock();
         if (WirelessHopperBlock.isWirelessHopper(block)) {
@@ -181,10 +194,13 @@ final class WirelessHopperListener implements Listener {
 
     @EventHandler
     public void onPrepareCraft(PrepareItemCraftEvent event) {
-        if (event.getInventory().getResult() == null || event.getInventory().getResult().getType() != Material.WARPED_SLAB) {
+        ItemStack result = event.getInventory().getResult();
+        if (result == null || result.getType() != Material.TUFF_SLAB) {
             return;
         }
-        event.getInventory().setResult(null);
+        if (!WirelessItems.isWirelessHopper(result)) {
+            event.getInventory().setResult(null);
+        }
     }
 
     @EventHandler
@@ -192,10 +208,13 @@ final class WirelessHopperListener implements Listener {
         if (event.getCurrentItem() == null) {
             return;
         }
-        if (event.getCurrentItem().getType() != Material.WARPED_SLAB) {
+        ItemStack current = event.getCurrentItem();
+        if (current.getType() != Material.TUFF_SLAB) {
             return;
         }
-        event.setCancelled(true);
+        if (!WirelessItems.isWirelessHopper(current)) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler
@@ -207,7 +226,7 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         ItemStack current = event.getCurrentItem();
-        if (current != null && current.getType() == Material.WARPED_SLAB) {
+        if (current != null && current.getType() == Material.TUFF_SLAB && !WirelessItems.isWirelessHopper(current)) {
             event.setCancelled(true);
         }
     }
