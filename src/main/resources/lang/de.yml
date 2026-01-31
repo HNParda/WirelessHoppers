@@ -1,0 +1,71 @@
+gui:
+  title: "Wireless Hopper"
+  toggle:
+    whitelist: "Whitelist-Modus"
+    blacklist: "Blacklist-Modus"
+    click: "Klicken zum Umschalten"
+    whitelist_summary: "Whitelist mit {count} Item(s)"
+    blacklist_summary: "Blacklist mit {count} Item(s)"
+  filter:
+    slot: "Filter-Slot {index}"
+    empty: "Leer"
+    set: "Links-Klick mit Item zum Setzen"
+    item: "Item: {item}"
+    replace: "Links-Klick mit Item zum Ersetzen"
+    clear: "Leeres Feld anklicken zum Löschen"
+  status:
+    upgrade: "Upgrade"
+    target: "Ziel"
+    mode: "Modus"
+  upgrade:
+    none: "Kein Upgrade installiert"
+    cooldown: "Cooldown: {ticks} Ticks"
+    items_per: "Items/Transfer: {count}"
+  target:
+    not_linked: "Nicht verknüpft"
+    coords: "x{X} y{Y} z{Z}"
+tool:
+  linked: "Verbunden: {type}"
+  coords: "x{X} y{Y} z{Z}"
+resourcepack:
+  missing_url: "Resource-Pack-URL ist nicht konfiguriert."
+command:
+  only_players: "Nur Spieler können diesen Befehl benutzen."
+  no_permission: "Du hast keine Berechtigung für diesen Befehl."
+  usage_give: "Benutzung: /{label} give <spieler> <item>"
+  items: "Items: hopper, tool, upgrade_iron, upgrade_gold, upgrade_diamond, upgrade_netherite, all"
+  pack: "Oder: /{label} pack"
+  player_not_found: "Spieler nicht gefunden."
+  unknown_item: "Unbekanntes Item. Nutze: hopper, tool, upgrade_iron, upgrade_gold, upgrade_diamond, upgrade_netherite, all"
+  gave_items: "Items an {player} gegeben."
+  lang:
+    usage: "Benutzung: /{label} lang <auto|de|en>"
+    current: "Aktuelle Sprache: {lang}"
+    set: "Sprache gesetzt auf {lang}."
+    set_auto: "Sprache auf Auto (Client-Sprache) gesetzt."
+    invalid: "Unbekannte Sprache. Nutze: auto, de, en."
+listener:
+  place_no_permission: "Du hast keine Berechtigung, Wireless Hoppers zu platzieren."
+  place_reserved: "Bamboo Mozaik Slabs sind für Wireless Hoppers reserviert."
+  break_no_permission: "Du hast keine Berechtigung, Wireless Hoppers abzubauen."
+  target_linked: "Ziel verknüpft: {type}"
+  use_no_permission: "Du hast keine Berechtigung, Wireless Hoppers zu benutzen."
+items:
+  hopper:
+    name: "Wireless Hopper"
+    lore:
+      row1: "Reihe 1: Puffer"
+      row234: "Reihe 2,3,4: Filter"
+      row5: "Reihe 5: Steuerung"
+      configure: "Rechtsklick zum Konfigurieren"
+  tool:
+    name: "Wireless Hopper Linker"
+    lore:
+      bind: "Rechtsklick auf Container zum Verbinden"
+      insert: "In Ziel-Slot einsetzen"
+upgrade:
+  tier:
+    iron: "Eisen-Upgrade"
+    gold: "Gold-Upgrade"
+    diamond: "Diamant-Upgrade"
+    netherite: "Netherit-Upgrade"

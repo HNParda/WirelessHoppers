@@ -26,15 +26,19 @@ final class WirelessItems {
     }
 
     static ItemStack createHopperItem() {
-        ItemStack item = new ItemStack(Material.TUFF_SLAB);
+        return createHopperItem(Lang.defaultLocale());
+    }
+
+    static ItemStack createHopperItem(String locale) {
+        ItemStack item = new ItemStack(Material.BAMBOO_MOSAIC_SLAB);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text("Wireless Hopper", NamedTextColor.GOLD));
+        meta.displayName(Component.text(Lang.tr(locale, "items.hopper.name"), NamedTextColor.GOLD));
         meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), MODEL_HOPPER));
         meta.lore(List.of(
-            Component.text("Row 1: Buffer", NamedTextColor.GRAY),
-            Component.text("Row 2,3,4: Filters", NamedTextColor.GRAY),
-            Component.text("Row 5: Controls", NamedTextColor.GRAY),
-            Component.text("Right-click to configure", NamedTextColor.DARK_GRAY)
+            Component.text(Lang.tr(locale, "items.hopper.lore.row1"), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "items.hopper.lore.row234"), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "items.hopper.lore.row5"), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "items.hopper.lore.configure"), NamedTextColor.DARK_GRAY)
         ));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -44,6 +48,10 @@ final class WirelessItems {
     }
 
     static ItemStack createUpgradeItem(UpgradeTier tier) {
+        return createUpgradeItem(tier, Lang.defaultLocale());
+    }
+
+    static ItemStack createUpgradeItem(UpgradeTier tier, String locale) {
         Material material = switch (tier) {
             case IRON -> Material.IRON_INGOT;
             case GOLD -> Material.GOLD_INGOT;
@@ -51,11 +59,11 @@ final class WirelessItems {
             case NETHERITE -> Material.NETHERITE_INGOT;
         };
         ItemStack item = new ItemStack(material);
-        applyUpgradeLore(item, tier);
+        applyUpgradeLore(item, tier, locale);
         return item;
     }
 
-    static void applyUpgradeLore(ItemStack item, UpgradeTier tier) {
+    static void applyUpgradeLore(ItemStack item, UpgradeTier tier, String locale) {
         if (item == null || item.getType().isAir() || tier == null) {
             return;
         }
@@ -63,7 +71,7 @@ final class WirelessItems {
         if (meta == null) {
             return;
         }
-        meta.displayName(Component.text(tier.displayName(), NamedTextColor.AQUA));
+        meta.displayName(Component.text(Lang.tr(locale, tier.langKey()), NamedTextColor.AQUA));
         meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), switch (tier) {
             case IRON -> MODEL_UPGRADE_IRON;
             case GOLD -> MODEL_UPGRADE_GOLD;
@@ -71,8 +79,8 @@ final class WirelessItems {
             case NETHERITE -> MODEL_UPGRADE_NETHERITE;
         }));
         meta.lore(List.of(
-            Component.text("Cooldown: " + tier.cooldownTicks() + " ticks", NamedTextColor.GRAY),
-            Component.text("Items/transfer: " + tier.itemsPerTransfer(), NamedTextColor.GRAY)
+            Component.text(Lang.tr(locale, "gui.upgrade.cooldown", java.util.Map.of("ticks", String.valueOf(tier.cooldownTicks()))), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "gui.upgrade.items_per", java.util.Map.of("count", String.valueOf(tier.itemsPerTransfer()))), NamedTextColor.GRAY)
         ));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
@@ -82,13 +90,17 @@ final class WirelessItems {
     }
 
     static ItemStack createTargetTool() {
+        return createTargetTool(Lang.defaultLocale());
+    }
+
+    static ItemStack createTargetTool(String locale) {
         ItemStack item = new ItemStack(Material.COMPASS);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text("Wireless Hopper Linker", NamedTextColor.GREEN));
+        meta.displayName(Component.text(Lang.tr(locale, "items.tool.name"), NamedTextColor.GREEN));
         meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), MODEL_TOOL));
         meta.lore(List.of(
-            Component.text("Right-click a container to bind", NamedTextColor.GRAY),
-            Component.text("Insert into target slot", NamedTextColor.DARK_GRAY)
+            Component.text(Lang.tr(locale, "items.tool.lore.bind"), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "items.tool.lore.insert"), NamedTextColor.DARK_GRAY)
         ));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         PersistentDataContainer pdc = meta.getPersistentDataContainer();

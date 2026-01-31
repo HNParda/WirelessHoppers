@@ -100,13 +100,12 @@ final class HopperScheduler implements Runnable {
     }
 
     private void syncToOpenGui(HopperRegistry.HopperPos pos, HopperData data) {
-        Inventory inventory = registry.getOpenInventory(pos);
-        if (inventory == null) {
-            return;
+        for (Inventory inventory : registry.getOpenInventories(pos)) {
+            HopperGui.writeBuffer(inventory, data.buffer());
+            String locale = HopperGui.localeFromInventory(inventory);
+            HopperGui.writeFilters(inventory, data.filters(), locale);
+            HopperGui.writeStatus(inventory, data);
         }
-        HopperGui.writeBuffer(inventory, data.buffer());
-        HopperGui.writeFilters(inventory, data.filters());
-        HopperGui.writeStatus(inventory, data);
     }
 
     private boolean pickupGroundItems(HopperData data) {

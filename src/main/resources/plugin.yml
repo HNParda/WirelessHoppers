@@ -5,15 +5,15 @@ api-version: '1.20'
 permissions:
   wirelesshopper.place:
     description: Allows placing Wireless Hoppers.
-    default: op
+    default: true
   wirelesshopper.use:
     description: Allows using and breaking Wireless Hoppers.
-    default: op
-  wirelesshopper.give:
-    description: Allows giving Wireless Hopper items.
-    default: op
+    default: true
   wirelesshopper.pack:
     description: Allows prompting the resource pack.
+    default: true
+  wirelesshopper.give:
+    description: Allows giving Wireless Hopper items.
     default: op
 
 commands:

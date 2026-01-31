@@ -16,15 +16,15 @@ final class WirelessHopperBlock {
     }
 
     static boolean isWirelessHopper(Block block) {
-        if (storage == null || block == null || block.getType() != Material.TUFF_SLAB) {
+        if (storage == null || block == null || block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return false;
         }
         return storage.contains(block);
     }
 
     static void markWirelessHopper(Block block) {
-        if (block.getType() != Material.TUFF_SLAB) {
-            block.setType(Material.TUFF_SLAB, false);
+        if (block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
+            block.setType(Material.BAMBOO_MOSAIC_SLAB, false);
         }
         BlockData data = block.getBlockData();
         if (data instanceof Slab slab) {
@@ -38,21 +38,23 @@ final class WirelessHopperBlock {
     }
 
     static void clear(Block block) {
-        if (storage == null || block == null || block.getType() != Material.TUFF_SLAB) {
+        if (storage == null || block == null || block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         storage.remove(block);
+        storage.save();
     }
 
     static void writeData(Block block, byte[] data) {
-        if (storage == null || block == null || block.getType() != Material.TUFF_SLAB) {
+        if (storage == null || block == null || block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         storage.put(block, data);
+        storage.save();
     }
 
     static byte[] readData(Block block) {
-        if (storage == null || block == null || block.getType() != Material.TUFF_SLAB) {
+        if (storage == null || block == null || block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return null;
         }
         return storage.get(block);

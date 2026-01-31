@@ -1,5 +1,6 @@
 package com.hnp_arda.wireless_hoppers;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -34,8 +35,9 @@ final class HopperData {
         this.whitelist = false;
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     static HopperData load(Block block) {
-        if (block.getType() != Material.TUFF_SLAB) {
+        if (block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return null;
         }
         byte[] payload = WirelessHopperBlock.readData(block);
@@ -45,9 +47,10 @@ final class HopperData {
         try {
             return deserialize(block.getLocation(), payload);
         } catch (RuntimeException ex) {
-            HopperData fresh = new HopperData(block.getLocation());
-            fresh.save(block);
-            return fresh;
+            Bukkit.getLogger().warning("[WirelessHopper] Failed to load data at "
+                + block.getWorld().getName() + " " + block.getX() + " " + block.getY() + " " + block.getZ()
+                + " payloadSize=" + payload.length + " error=" + ex.getMessage());
+            return null;
         }
     }
 
@@ -71,11 +74,7 @@ final class HopperData {
     private static final int MAGIC = 0x574831;
 
     private static HopperData deserialize(Location location, byte[] data) {
-        if (data.length < 4) {
-            throw new IllegalStateException("Invalid hopper data format");
-        }
-        int magic = ((data[0] & 0xFF) << 24) | ((data[1] & 0xFF) << 16) | ((data[2] & 0xFF) << 8) | (data[3] & 0xFF);
-        if (magic != MAGIC) {
+        if (data.length < 8) {
             throw new IllegalStateException("Invalid hopper data format");
         }
         return newDeserialize(location, data);
@@ -88,8 +87,14 @@ final class HopperData {
             if (magic != MAGIC) {
                 throw new IllegalStateException("Invalid hopper data format");
             }
+            int versionOrFilterCount = in.readInt();
+            int filterCount;
+            if (versionOrFilterCount == 1) {
+                filterCount = in.readInt();
+            } else {
+                filterCount = versionOrFilterCount;
+            }
             HopperData hopperData = new HopperData(location);
-            int filterCount = in.readInt();
             if (filterCount < 0 || filterCount > FILTER_SLOTS) {
                 throw new IllegalStateException("Invalid filter count: " + filterCount);
             }
@@ -175,7 +180,7 @@ final class HopperData {
     }
 
     void save(Block block) {
-        if (block.getType() != Material.TUFF_SLAB) {
+        if (block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             WirelessHopperBlock.clear(block);
             return;
         }

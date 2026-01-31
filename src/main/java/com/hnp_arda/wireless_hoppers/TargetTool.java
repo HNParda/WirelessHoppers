@@ -15,7 +15,7 @@ final class TargetTool {
     private TargetTool() {
     }
 
-    static void writeTarget(ItemStack tool, BlockState state) {
+    static void writeTarget(ItemStack tool, BlockState state, String locale) {
         if (tool == null || state == null) {
             return;
         }
@@ -32,8 +32,12 @@ final class TargetTool {
         PersistentDataContainer pdc = meta.getPersistentDataContainer();
         pdc.set(Keys.TOOL_TARGET, PersistentDataType.STRING, payload);
         meta.lore(List.of(
-            Component.text("Linked: " + inventoryType, NamedTextColor.GRAY),
-            Component.text("x" + loc.getBlockX() + " y" + loc.getBlockY() + " z" + loc.getBlockZ(), NamedTextColor.GRAY)
+            Component.text(Lang.tr(locale, "tool.linked", java.util.Map.of("type", inventoryType)), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, "tool.coords", java.util.Map.of(
+                "X", String.valueOf(loc.getBlockX()),
+                "Y", String.valueOf(loc.getBlockY()),
+                "Z", String.valueOf(loc.getBlockZ())
+            )), NamedTextColor.GRAY)
         ));
         tool.setItemMeta(meta);
     }

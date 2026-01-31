@@ -7,13 +7,14 @@ import org.bukkit.inventory.*;
 
 final class RecipeManager {
     private final Main plugin;
+    private final java.util.List<NamespacedKey> recipeKeys = new java.util.ArrayList<>();
 
     RecipeManager(Main plugin) {
         this.plugin = plugin;
     }
 
     void registerAll() {
-        removeVanillaTuffSlabRecipes();
+        removeVanillaSlabRecipes();
 
         registerRecipe("wireless_hopper", WirelessItems.createHopperItem(),
                 "ROR", "IHI", "ROR",
@@ -49,6 +50,10 @@ final class RecipeManager {
         registerNetheriteSmithing();
     }
 
+    java.util.List<NamespacedKey> recipeKeys() {
+        return java.util.List.copyOf(recipeKeys);
+    }
+
     private void registerNetheriteSmithing() {
         NamespacedKey key = new NamespacedKey(plugin, "wireless_upgrade_netherite_smithing");
         ItemStack result = WirelessItems.createUpgradeItem(UpgradeTier.NETHERITE);
@@ -57,9 +62,10 @@ final class RecipeManager {
         RecipeChoice addition = new RecipeChoice.MaterialChoice(Material.NETHERITE_INGOT);
         SmithingTransformRecipe recipe = new SmithingTransformRecipe(key, result, template, base, addition);
         Bukkit.addRecipe(recipe);
+        recipeKeys.add(key);
     }
 
-    private void removeVanillaTuffSlabRecipes() {
+    private void removeVanillaSlabRecipes() {
         java.util.Iterator<Recipe> iterator = Bukkit.recipeIterator();
         while (iterator.hasNext()) {
             Recipe recipe = iterator.next();
@@ -68,7 +74,7 @@ final class RecipeManager {
             } else {
                 recipe.getResult();
             }
-            if (recipe.getResult().getType() == Material.TUFF_SLAB) {
+            if (recipe.getResult().getType() == Material.BAMBOO_MOSAIC_SLAB) {
                 iterator.remove();
             }
         }
@@ -77,11 +83,13 @@ final class RecipeManager {
 
     private void registerRecipe(String key, ItemStack result, String row1, String row2, String row3,
                                 Ingredient... ingredients) {
-        ShapedRecipe recipe = new ShapedRecipe(new NamespacedKey(plugin, key), result);
+        NamespacedKey namespacedKey = new NamespacedKey(plugin, key);
+        ShapedRecipe recipe = new ShapedRecipe(namespacedKey, result);
         recipe.shape(row1, row2, row3);
         for (Ingredient ingredient : ingredients)
             recipe.setIngredient(ingredient.ID, ingredient.ingredient);
         Bukkit.addRecipe(recipe);
+        recipeKeys.add(namespacedKey);
     }
 
 

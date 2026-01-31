@@ -32,13 +32,16 @@ final class WirelessHopperListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Block block = event.getBlockPlaced();
         ItemStack item = event.getItemInHand();
-        if (block.getType() != Material.TUFF_SLAB) {
+        if (block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         if (WirelessItems.isWirelessHopper(item)) {
             if (!event.getPlayer().hasPermission("wirelesshopper.place")) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(Component.text("You don't have permission to place Wireless Hoppers.", NamedTextColor.RED));
+                event.getPlayer().sendMessage(Component.text(
+                    Lang.tr(event.getPlayer(), "listener.place_no_permission"),
+                    NamedTextColor.RED
+                ));
                 return;
             }
             WirelessHopperBlock.markWirelessHopper(block);
@@ -47,7 +50,10 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(Component.text("Tuff slabs are reserved for Wireless Hoppers.", NamedTextColor.RED));
+        event.getPlayer().sendMessage(Component.text(
+            Lang.tr(event.getPlayer(), "listener.place_reserved"),
+            NamedTextColor.RED
+        ));
     }
 
     @EventHandler
@@ -58,7 +64,10 @@ final class WirelessHopperListener implements Listener {
         }
         if (!event.getPlayer().hasPermission("wirelesshopper.use")) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(Component.text("You don't have permission to break Wireless Hoppers.", NamedTextColor.RED));
+            event.getPlayer().sendMessage(Component.text(
+                Lang.tr(event.getPlayer(), "listener.break_no_permission"),
+                NamedTextColor.RED
+            ));
             return;
         }
         event.setDropItems(false);
@@ -72,7 +81,8 @@ final class WirelessHopperListener implements Listener {
                 upgrade = null;
             }
             if (upgrade != null) {
-                WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade));
+                WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade),
+                    Lang.localeFromPlayer(event.getPlayer()));
             }
             data.setUpgradeItem(HopperGui.cloneSingle(upgrade));
             ItemStack targetItem = open.getItem(HopperGui.TARGET_SLOT);
@@ -126,16 +136,20 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         ItemStack item = event.getItem();
-        if (event.getPlayer().isSneaking() && item != null && item.getType().isBlock() && block.getType() == Material.TUFF_SLAB) {
+        if (event.getPlayer().isSneaking() && item != null && item.getType().isBlock() && block.getType() == Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         if (WirelessItems.isTargetTool(item) && block.getState() instanceof org.bukkit.inventory.InventoryHolder) {
-            TargetTool.writeTarget(item, block.getState());
-            event.getPlayer().sendMessage(Component.text("Linked target: " + block.getType().name(), NamedTextColor.GREEN));
+            TargetTool.writeTarget(item, block.getState(), Lang.localeFromPlayer(event.getPlayer()));
+            event.getPlayer().sendMessage(Component.text(
+                Lang.tr(event.getPlayer(), "listener.target_linked",
+                    java.util.Map.of("type", block.getType().name())),
+                NamedTextColor.GREEN
+            ));
             event.setCancelled(true);
             return;
         }
-        if (block.getType() != Material.TUFF_SLAB) {
+        if (block.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         if (!WirelessHopperBlock.isWirelessHopper(block)) {
@@ -143,7 +157,10 @@ final class WirelessHopperListener implements Listener {
         }
         if (!event.getPlayer().hasPermission("wirelesshopper.use")) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(Component.text("You don't have permission to use Wireless Hoppers.", NamedTextColor.RED));
+            event.getPlayer().sendMessage(Component.text(
+                Lang.tr(event.getPlayer(), "listener.use_no_permission"),
+                NamedTextColor.RED
+            ));
             return;
         }
         HopperData data = registry.get(HopperRegistry.HopperPos.fromBlock(block));
@@ -158,7 +175,7 @@ final class WirelessHopperListener implements Listener {
         if (registry.get(pos) == null) {
             registry.register(block);
         }
-        event.getPlayer().openInventory(registry.openInventory(pos, data));
+        event.getPlayer().openInventory(registry.openInventory(event.getPlayer(), pos, data));
         event.setCancelled(true);
     }
 
@@ -195,7 +212,7 @@ final class WirelessHopperListener implements Listener {
     @EventHandler
     public void onPrepareCraft(PrepareItemCraftEvent event) {
         ItemStack result = event.getInventory().getResult();
-        if (result == null || result.getType() != Material.TUFF_SLAB) {
+        if (result == null || result.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         if (!WirelessItems.isWirelessHopper(result)) {
@@ -209,7 +226,7 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         ItemStack current = event.getCurrentItem();
-        if (current.getType() != Material.TUFF_SLAB) {
+        if (current.getType() != Material.BAMBOO_MOSAIC_SLAB) {
             return;
         }
         if (!WirelessItems.isWirelessHopper(current)) {
@@ -226,7 +243,7 @@ final class WirelessHopperListener implements Listener {
             return;
         }
         ItemStack current = event.getCurrentItem();
-        if (current != null && current.getType() == Material.TUFF_SLAB && !WirelessItems.isWirelessHopper(current)) {
+        if (current != null && current.getType() == Material.BAMBOO_MOSAIC_SLAB && !WirelessItems.isWirelessHopper(current)) {
             event.setCancelled(true);
         }
     }

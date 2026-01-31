@@ -30,10 +30,11 @@ final class HopperGui {
     private HopperGui() {
     }
 
-    static Inventory create(HopperRegistry.HopperPos pos, HopperData data) {
-        Inventory inventory = Bukkit.createInventory(new HopperGuiHolder(pos), SIZE, Component.text("Wireless Hopper", NamedTextColor.DARK_AQUA));
+    static Inventory create(HopperRegistry.HopperPos pos, HopperData data, String locale) {
+        Inventory inventory = Bukkit.createInventory(new HopperGuiHolder(pos, locale), SIZE,
+            Component.text(Lang.tr(locale, "gui.title"), NamedTextColor.DARK_AQUA));
         for (int i = FILTER_START; i <= FILTER_END; i++) {
-            inventory.setItem(i, filterDisplay(i - FILTER_START, data.filters()[i - FILTER_START]));
+            inventory.setItem(i, filterDisplay(i - FILTER_START, data.filters()[i - FILTER_START], locale));
         }
         for (int i = BUFFER_START; i <= BUFFER_END; i++) {
             inventory.setItem(i, cloneSingle(data.buffer()[i]));
@@ -41,11 +42,11 @@ final class HopperGui {
         ItemStack upgrade = cloneSingle(data.upgradeItem());
         if (upgrade != null) {
             UpgradeTier tier = WirelessItems.getUpgradeTier(upgrade);
-            WirelessItems.applyUpgradeLore(upgrade, tier);
+            WirelessItems.applyUpgradeLore(upgrade, tier, locale);
         }
         inventory.setItem(UPGRADE_SLOT, upgrade);
         inventory.setItem(TARGET_SLOT, cloneSingle(data.targetItem()));
-        inventory.setItem(TOGGLE_SLOT, toggleItem(data));
+        inventory.setItem(TOGGLE_SLOT, toggleItem(data, locale));
 
         ItemStack filler = fillerItem(Component.text(" ", NamedTextColor.DARK_GRAY));
         for (int i = BUFFER_END + 1; i < STATUS_START; i++) {
@@ -70,19 +71,22 @@ final class HopperGui {
         return slot >= STATUS_START && slot <= STATUS_END;
     }
 
-    static ItemStack toggleItem(HopperData data) {
+    static ItemStack toggleItem(HopperData data, String locale) {
         boolean whitelist = data.isWhitelist();
         int count = countItems(data.filters());
         Material material = whitelist ? Material.LIME_DYE : Material.RED_DYE;
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text(whitelist ? "Whitelist Mode" : "Blacklist Mode", whitelist ? NamedTextColor.GREEN : NamedTextColor.RED));
+        meta.displayName(Component.text(
+            Lang.tr(locale, whitelist ? "gui.toggle.whitelist" : "gui.toggle.blacklist"),
+            whitelist ? NamedTextColor.GREEN : NamedTextColor.RED
+        ));
         meta.lore(List.of(
-                Component.text("Click to toggle", NamedTextColor.GRAY),
-                Component.text(
-                        (whitelist ? "Whitelist with " : "Blacklist with ") + count + " item(s)",
-                        whitelist ? NamedTextColor.GREEN : NamedTextColor.RED
-                )
+                Component.text(Lang.tr(locale, "gui.toggle.click"), NamedTextColor.GRAY),
+                Component.text(Lang.tr(locale,
+                        whitelist ? "gui.toggle.whitelist_summary" : "gui.toggle.blacklist_summary",
+                        java.util.Map.of("count", String.valueOf(count))),
+                        whitelist ? NamedTextColor.GREEN : NamedTextColor.RED)
         ));
         item.setItemMeta(meta);
         return item;
@@ -96,14 +100,15 @@ final class HopperGui {
         return item;
     }
 
-    static ItemStack filterDisplay(int index, ItemStack filter) {
+    static ItemStack filterDisplay(int index, ItemStack filter, String locale) {
         if (filter == null || filter.getType().isAir()) {
             ItemStack pane = new ItemStack(Material.LIGHT_BLUE_STAINED_GLASS_PANE);
             ItemMeta meta = pane.getItemMeta();
-            meta.displayName(Component.text("Filter Slot " + (index + 1), NamedTextColor.AQUA));
+            meta.displayName(Component.text(Lang.tr(locale, "gui.filter.slot",
+                java.util.Map.of("index", String.valueOf(index + 1))), NamedTextColor.AQUA));
             meta.lore(List.of(
-                Component.text("Empty", NamedTextColor.GRAY),
-                Component.text("Left-click with item to set", NamedTextColor.DARK_GRAY)
+                Component.text(Lang.tr(locale, "gui.filter.empty"), NamedTextColor.GRAY),
+                Component.text(Lang.tr(locale, "gui.filter.set"), NamedTextColor.DARK_GRAY)
             ));
             meta.getPersistentDataContainer().set(Keys.FILTER_PANE, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
             pane.setItemMeta(meta);
@@ -113,10 +118,12 @@ final class HopperGui {
         ItemMeta meta = display.getItemMeta();
         if (meta != null) {
             List<Component> lore = new ArrayList<>();
-            meta.displayName(Component.text("Filter Slot " + (index + 1), NamedTextColor.AQUA));
-            lore.add(Component.text("Item: " + displayName(filter), NamedTextColor.GRAY));
-            lore.add(Component.text("Left-click with item to replace", NamedTextColor.DARK_GRAY));
-            lore.add(Component.text("Click empty to clear", NamedTextColor.DARK_GRAY));
+            meta.displayName(Component.text(Lang.tr(locale, "gui.filter.slot",
+                java.util.Map.of("index", String.valueOf(index + 1))), NamedTextColor.AQUA));
+            lore.add(Component.text(Lang.tr(locale, "gui.filter.item",
+                java.util.Map.of("item", displayName(filter))), NamedTextColor.GRAY));
+            lore.add(Component.text(Lang.tr(locale, "gui.filter.replace"), NamedTextColor.DARK_GRAY));
+            lore.add(Component.text(Lang.tr(locale, "gui.filter.clear"), NamedTextColor.DARK_GRAY));
             meta.lore(lore);
             meta.getPersistentDataContainer().set(Keys.FILTER_PANE, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
             display.setItemMeta(meta);
@@ -134,14 +141,14 @@ final class HopperGui {
         return item;
     }
 
-    static List<ItemStack> statusItems(HopperData data) {
+    static List<ItemStack> statusItems(HopperData data, String locale) {
         List<ItemStack> items = new ArrayList<>();
-        items.add(statusItem("Upgrade",
-            upgradeLore(data)));
-        items.add(statusItem("Target",
-            targetLore(data)));
-        items.add(statusItem("Mode",
-            List.of(filterSummary(data))));
+        items.add(statusItem(Lang.tr(locale, "gui.status.upgrade"),
+            upgradeLore(data, locale)));
+        items.add(statusItem(Lang.tr(locale, "gui.status.target"),
+            targetLore(data, locale)));
+        items.add(statusItem(Lang.tr(locale, "gui.status.mode"),
+            List.of(filterSummary(data, locale))));
         return items;
     }
 
@@ -170,19 +177,20 @@ final class HopperGui {
         }
     }
 
-    static void writeFilters(Inventory inventory, ItemStack[] filters) {
+    static void writeFilters(Inventory inventory, ItemStack[] filters, String locale) {
         for (int i = FILTER_START; i <= FILTER_END; i++) {
             int index = i - FILTER_START;
-            inventory.setItem(i, filterDisplay(index, filters[index]));
+            inventory.setItem(i, filterDisplay(index, filters[index], locale));
         }
     }
 
     static void writeStatus(Inventory inventory, HopperData data) {
+        String locale = localeFromInventory(inventory);
         ItemStack filler = fillerItem(Component.text(" ", NamedTextColor.DARK_GRAY));
         for (int i = STATUS_START; i <= STATUS_END; i++) {
             inventory.setItem(i, filler);
         }
-        List<ItemStack> statusItems = statusItems(data);
+        List<ItemStack> statusItems = statusItems(data, locale);
         if (!statusItems.isEmpty()) {
             inventory.setItem(45, statusItems.getFirst());
         }
@@ -192,41 +200,51 @@ final class HopperGui {
         if (statusItems.size() > 2) {
             inventory.setItem(53, statusItems.get(2));
         }
-        inventory.setItem(TOGGLE_SLOT, toggleItem(data));
+        inventory.setItem(TOGGLE_SLOT, toggleItem(data, locale));
     }
 
-    private static Component filterSummary(HopperData data) {
+    private static Component filterSummary(HopperData data, String locale) {
         int count = countItems(data.filters());
         if (data.isWhitelist()) {
-            return Component.text("Whitelist with " + count + " item(s)", NamedTextColor.GREEN);
+            return Component.text(Lang.tr(locale, "gui.toggle.whitelist_summary",
+                java.util.Map.of("count", String.valueOf(count))), NamedTextColor.GREEN);
         }
-        return Component.text("Blacklist with " + count + " item(s)", NamedTextColor.RED);
+        return Component.text(Lang.tr(locale, "gui.toggle.blacklist_summary",
+            java.util.Map.of("count", String.valueOf(count))), NamedTextColor.RED);
     }
 
-    private static List<Component> upgradeLore(HopperData data) {
+    private static List<Component> upgradeLore(HopperData data, String locale) {
         UpgradeTier tier = data.upgradeTier();
         if (tier == null) {
             return List.of(
-                Component.text("No upgrade installed", NamedTextColor.GRAY),
-                Component.text("Cooldown: 16 ticks", NamedTextColor.GRAY),
-                Component.text("Items/transfer: 1", NamedTextColor.GRAY)
+                Component.text(Lang.tr(locale, "gui.upgrade.none"), NamedTextColor.GRAY),
+                Component.text(Lang.tr(locale, "gui.upgrade.cooldown",
+                    java.util.Map.of("ticks", String.valueOf(16))), NamedTextColor.GRAY),
+                Component.text(Lang.tr(locale, "gui.upgrade.items_per",
+                    java.util.Map.of("count", String.valueOf(1))), NamedTextColor.GRAY)
             );
         }
         return List.of(
-                Component.text(tier.displayName(), NamedTextColor.AQUA),
-                Component.text("Cooldown: " + tier.cooldownTicks() + " ticks", NamedTextColor.GRAY),
-                Component.text("Items/transfer: " + tier.itemsPerTransfer(), NamedTextColor.GRAY)
+                Component.text(Lang.tr(locale, tier.langKey()), NamedTextColor.AQUA),
+                Component.text(Lang.tr(locale, "gui.upgrade.cooldown",
+                    java.util.Map.of("ticks", String.valueOf(tier.cooldownTicks()))), NamedTextColor.GRAY),
+                Component.text(Lang.tr(locale, "gui.upgrade.items_per",
+                    java.util.Map.of("count", String.valueOf(tier.itemsPerTransfer()))), NamedTextColor.GRAY)
         );
     }
 
-    private static List<Component> targetLore(HopperData data) {
+    private static List<Component> targetLore(HopperData data, String locale) {
         HopperData.TargetInfo target = data.targetInfo();
         if (target == null) {
-            return List.of(Component.text("Not linked", NamedTextColor.GRAY));
+            return List.of(Component.text(Lang.tr(locale, "gui.target.not_linked"), NamedTextColor.GRAY));
         }
         return List.of(
                 Component.text(target.inventoryType(), NamedTextColor.YELLOW),
-                Component.text("x" + target.x() + " y" + target.y() + " z" + target.z(), NamedTextColor.GRAY)
+                Component.text(Lang.tr(locale, "gui.target.coords", java.util.Map.of(
+                    "X", String.valueOf(target.x()),
+                    "Y", String.valueOf(target.y()),
+                    "Z", String.valueOf(target.z())
+                )), NamedTextColor.GRAY)
         );
     }
 
@@ -251,7 +269,14 @@ final class HopperGui {
         return item.getType().name();
     }
 
-    record HopperGuiHolder(HopperRegistry.HopperPos pos) implements InventoryHolder {
+    static String localeFromInventory(Inventory inventory) {
+        if (inventory.getHolder() instanceof HopperGuiHolder holder) {
+            return holder.locale();
+        }
+        return Lang.defaultLocale();
+    }
+
+    record HopperGuiHolder(HopperRegistry.HopperPos pos, String locale) implements InventoryHolder {
 
         @Override
         public @NonNull Inventory getInventory() {

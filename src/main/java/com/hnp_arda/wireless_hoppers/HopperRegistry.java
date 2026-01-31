@@ -2,6 +2,7 @@ package com.hnp_arda.wireless_hoppers;
 
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -12,7 +13,7 @@ final class HopperRegistry {
     private final HopperStorage storage;
     private final Map<HopperPos, HopperData> hoppers = new HashMap<>();
     private final Map<ChunkKey, Set<HopperPos>> hoppersByChunk = new HashMap<>();
-    private final Map<HopperPos, Inventory> openInventories = new HashMap<>();
+    private final Map<HopperPos, Map<UUID, Inventory>> openInventories = new HashMap<>();
 
     HopperRegistry(HopperStorage storage) {
         this.storage = storage;
@@ -31,32 +32,58 @@ final class HopperRegistry {
     }
 
     Inventory getOpenInventory(HopperPos pos) {
-        return openInventories.get(pos);
+        Map<UUID, Inventory> byPlayer = openInventories.get(pos);
+        if (byPlayer == null || byPlayer.isEmpty()) {
+            return null;
+        }
+        return byPlayer.values().iterator().next();
     }
 
-    Inventory openInventory(HopperPos pos, HopperData data) {
-        Inventory existing = openInventories.get(pos);
+    Collection<Inventory> getOpenInventories(HopperPos pos) {
+        Map<UUID, Inventory> byPlayer = openInventories.get(pos);
+        if (byPlayer == null || byPlayer.isEmpty()) {
+            return List.of();
+        }
+        return List.copyOf(byPlayer.values());
+    }
+
+    Inventory openInventory(Player player, HopperPos pos, HopperData data) {
+        if (!hoppers.containsKey(pos)) {
+            hoppers.put(pos, data);
+            Block block = data.location().getBlock();
+            hoppersByChunk.computeIfAbsent(ChunkKey.fromBlock(block), ignored -> new HashSet<>()).add(pos);
+        }
+        String locale = Lang.localeFromPlayer(player);
+        Map<UUID, Inventory> byPlayer = openInventories.computeIfAbsent(pos, ignored -> new HashMap<>());
+        Inventory existing = byPlayer.get(player.getUniqueId());
         if (existing != null) {
             HopperGui.writeBuffer(existing, data.buffer());
-            HopperGui.writeFilters(existing, data.filters());
+            HopperGui.writeFilters(existing, data.filters(), locale);
             ItemStack upgrade = HopperGui.cloneSingle(data.upgradeItem());
             if (upgrade != null) {
                 UpgradeTier tier = WirelessItems.getUpgradeTier(upgrade);
-                WirelessItems.applyUpgradeLore(upgrade, tier);
+                WirelessItems.applyUpgradeLore(upgrade, tier, locale);
             }
             existing.setItem(HopperGui.UPGRADE_SLOT, upgrade);
             existing.setItem(HopperGui.TARGET_SLOT, HopperGui.cloneSingle(data.targetItem()));
-            existing.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data));
+            existing.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data, locale));
             HopperGui.writeStatus(existing, data);
             return existing;
         }
-        Inventory created = HopperGui.create(pos, data);
-        openInventories.put(pos, created);
+        Inventory created = HopperGui.create(pos, data, locale);
+        byPlayer.put(player.getUniqueId(), created);
         return created;
     }
 
-    void closeInventory(HopperPos pos) {
-        openInventories.remove(pos);
+    void closeInventory(HopperPos pos, UUID playerId) {
+        Map<UUID, Inventory> byPlayer = openInventories.get(pos);
+        if (byPlayer == null) {
+            return;
+        }
+        byPlayer.remove(playerId);
+        if (byPlayer.isEmpty()) {
+            openInventories.remove(pos);
+        }
     }
 
     void register(Block block) {

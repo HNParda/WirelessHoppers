@@ -1,0 +1,71 @@
+gui:
+  title: "Wireless Hopper"
+  toggle:
+    whitelist: "Whitelist Mode"
+    blacklist: "Blacklist Mode"
+    click: "Click to toggle"
+    whitelist_summary: "Whitelist with {count} item(s)"
+    blacklist_summary: "Blacklist with {count} item(s)"
+  filter:
+    slot: "Filter Slot {index}"
+    empty: "Empty"
+    set: "Left-click with item to set"
+    item: "Item: {item}"
+    replace: "Left-click with item to replace"
+    clear: "Click empty to clear"
+  status:
+    upgrade: "Upgrade"
+    target: "Target"
+    mode: "Mode"
+  upgrade:
+    none: "No upgrade installed"
+    cooldown: "Cooldown: {ticks} ticks"
+    items_per: "Items/transfer: {count}"
+  target:
+    not_linked: "Not linked"
+    coords: "x{X} y{Y} z{Z}"
+tool:
+  linked: "Linked: {type}"
+  coords: "x{X} y{Y} z{Z}"
+resourcepack:
+  missing_url: "Resource pack URL is not configured."
+command:
+  only_players: "Only players can use this command."
+  no_permission: "You don't have permission to use this command."
+  usage_give: "Usage: /{label} give <player> <item>"
+  items: "Items: hopper, tool, upgrade_iron, upgrade_gold, upgrade_diamond, upgrade_netherite, all"
+  pack: "Or: /{label} pack"
+  player_not_found: "Player not found."
+  unknown_item: "Unknown item. Use: hopper, tool, upgrade_iron, upgrade_gold, upgrade_diamond, upgrade_netherite, all"
+  gave_items: "Gave items to {player}."
+  lang:
+    usage: "Usage: /{label} lang <auto|de|en>"
+    current: "Current language: {lang}"
+    set: "Language set to {lang}."
+    set_auto: "Language set to auto (client language)."
+    invalid: "Unknown language. Use: auto, de, en."
+listener:
+  place_no_permission: "You don't have permission to place Wireless Hoppers."
+  place_reserved: "Bamboo mosaic slabs are reserved for Wireless Hoppers."
+  break_no_permission: "You don't have permission to break Wireless Hoppers."
+  target_linked: "Linked target: {type}"
+  use_no_permission: "You don't have permission to use Wireless Hoppers."
+items:
+  hopper:
+    name: "Wireless Hopper"
+    lore:
+      row1: "Row 1: Buffer"
+      row234: "Row 2,3,4: Filters"
+      row5: "Row 5: Controls"
+      configure: "Right-click to configure"
+  tool:
+    name: "Wireless Hopper Linker"
+    lore:
+      bind: "Right-click a container to bind"
+      insert: "Insert into target slot"
+upgrade:
+  tier:
+    iron: "Iron Upgrade"
+    gold: "Gold Upgrade"
+    diamond: "Diamond Upgrade"
+    netherite: "Netherite Upgrade"

@@ -11,10 +11,12 @@ public final class Main extends JavaPlugin implements Listener {
     private HopperRegistry registry;
     private ResourcePackManager resourcePackManager;
     private HopperStorage storage;
+    private RecipeManager recipeManager;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        Lang.init(this);
         Keys.init(this);
         storage = new HopperStorage(getDataFolder());
         storage.load();
@@ -23,7 +25,6 @@ public final class Main extends JavaPlugin implements Listener {
         ItemIndex itemIndex = new ItemIndex();
         HopperScheduler scheduler = new HopperScheduler(registry, itemIndex);
         resourcePackManager = new ResourcePackManager(this);
-        resourcePackManager.ensurePackReady();
 
         Bukkit.getPluginManager().registerEvents(new WirelessHopperListener(registry), this);
         Bukkit.getPluginManager().registerEvents(new HopperGuiListener(registry, this), this);
@@ -36,8 +37,8 @@ public final class Main extends JavaPlugin implements Listener {
             cmd.setTabCompleter(command);
         }
 
-        RecipeManager recipes = new RecipeManager(this);
-        recipes.registerAll();
+        recipeManager = new RecipeManager(this);
+        recipeManager.registerAll();
 
         Bukkit.getWorlds().forEach(world -> {
             for (org.bukkit.Chunk chunk : world.getLoadedChunks()) {
@@ -50,6 +51,9 @@ public final class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
+        if (getConfig().getBoolean("recipes-auto-unlock-on-join", true) && recipeManager != null) {
+            event.getPlayer().discoverRecipes(recipeManager.recipeKeys());
+        }
         if (!getConfig().getBoolean("resource-pack-auto-on-join", true)) {
             return;
         }
@@ -66,9 +70,6 @@ public final class Main extends JavaPlugin implements Listener {
         }
         if (storage != null) {
             storage.save();
-        }
-        if (resourcePackManager != null) {
-            resourcePackManager.shutdown();
         }
     }
 }

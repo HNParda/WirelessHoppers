@@ -1,19 +1,19 @@
 package com.hnp_arda.wireless_hoppers;
 
 enum UpgradeTier {
-    IRON(16, 4, "Iron Upgrade"),
-    GOLD(12, 8, "Gold Upgrade"),
-    DIAMOND(8, 16, "Diamond Upgrade"),
-    NETHERITE(4, 32, "Netherite Upgrade");
+    IRON(16, 4, "upgrade.tier.iron"),
+    GOLD(12, 8, "upgrade.tier.gold"),
+    DIAMOND(8, 16, "upgrade.tier.diamond"),
+    NETHERITE(4, 32, "upgrade.tier.netherite");
 
     private final int cooldownTicks;
     private final int itemsPerTransfer;
-    private final String displayName;
+    private final String langKey;
 
-    UpgradeTier(int cooldownTicks, int itemsPerTransfer, String displayName) {
+    UpgradeTier(int cooldownTicks, int itemsPerTransfer, String langKey) {
         this.cooldownTicks = cooldownTicks;
         this.itemsPerTransfer = itemsPerTransfer;
-        this.displayName = displayName;
+        this.langKey = langKey;
     }
 
     int cooldownTicks() {
@@ -24,7 +24,7 @@ enum UpgradeTier {
         return itemsPerTransfer;
     }
 
-    String displayName() {
-        return displayName;
+    String langKey() {
+        return langKey;
     }
 }

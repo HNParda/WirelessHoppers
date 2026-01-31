@@ -3,6 +3,8 @@ plugins {
     id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
+import java.security.MessageDigest
+
 group = 'com.hnp-arda.wireless_hoppers'
 version = '1.0'
 
@@ -48,5 +50,29 @@ processResources {
     filteringCharset 'UTF-8'
     filesMatching('plugin.yml') {
         expand props
+    }
+    exclude("resourcepack/**")
+}
+
+tasks.register("buildResourcePack", Zip) {
+    from("src/main/resources/resourcepack")
+    archiveFileName = "resourcepack.zip"
+    destinationDirectory = layout.buildDirectory.dir("resourcepack")
+}
+
+tasks.register("resourcePackSha1") {
+    dependsOn("buildResourcePack")
+    doLast {
+        def file = layout.buildDirectory.file("resourcepack/resourcepack.zip").get().asFile
+        def digest = MessageDigest.getInstance("SHA-1")
+        file.withInputStream { input ->
+            byte[] buffer = new byte[8192]
+            int read
+            while ((read = input.read(buffer)) != -1) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        def hash = digest.digest().collect { String.format("%02x", it) }.join()
+        println("resourcepack.zip SHA-1: ${hash}")
     }
 }

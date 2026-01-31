@@ -21,9 +21,10 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder holder)) {
             return;
         }
+        HopperRegistry.HopperPos pos = holder.pos();
         HopperData data = registry.get(pos);
         int rawSlot = event.getRawSlot();
         int topSize = event.getView().getTopInventory().getSize();
@@ -76,11 +77,12 @@ final class HopperGuiListener implements Listener {
             return;
         }
         Inventory top = event.getView().getTopInventory();
+        String locale = HopperGui.localeFromInventory(top);
 
         ItemStack upgradeSlot = top.getItem(HopperGui.UPGRADE_SLOT);
         if (WirelessItems.isUpgrade(current) && (upgradeSlot == null || upgradeSlot.getType().isAir())) {
             ItemStack moved = HopperGui.cloneSingle(current);
-            WirelessItems.applyUpgradeLore(moved, WirelessItems.getUpgradeTier(moved));
+            WirelessItems.applyUpgradeLore(moved, WirelessItems.getUpgradeTier(moved), locale);
             top.setItem(HopperGui.UPGRADE_SLOT, moved);
             decrementCurrent(event, current);
             scheduleFullSync(top, pos);
@@ -130,7 +132,8 @@ final class HopperGuiListener implements Listener {
             data.filters()[index] = HopperGui.cloneSingle(cursor);
             data.save(data.location().getBlock());
         }
-        event.getInventory().setItem(rawSlot, HopperGui.filterDisplay(index, data.filters()[index]));
+        String locale = HopperGui.localeFromInventory(event.getInventory());
+        event.getInventory().setItem(rawSlot, HopperGui.filterDisplay(index, data.filters()[index], locale));
         HopperGui.writeStatus(event.getInventory(), data);
     }
 
@@ -143,7 +146,8 @@ final class HopperGuiListener implements Listener {
         }
         if (event.isShiftClick() && current != null && !current.getType().isAir()) {
             ItemStack moving = HopperGui.cloneSingle(current);
-            WirelessItems.applyUpgradeLore(moving, WirelessItems.getUpgradeTier(moving));
+            String locale = HopperGui.localeFromInventory(event.getInventory());
+            WirelessItems.applyUpgradeLore(moving, WirelessItems.getUpgradeTier(moving), locale);
             Player player = (Player) event.getWhoClicked();
             if (player.getInventory().addItem(moving).isEmpty()) {
                 event.setCurrentItem(null);
@@ -204,9 +208,10 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder holder)) {
             return;
         }
+        HopperRegistry.HopperPos pos = holder.pos();
         boolean touchesBuffer = false;
         for (int slot : event.getRawSlots()) {
             if (slot >= event.getView().getTopInventory().getSize()) {
@@ -229,15 +234,20 @@ final class HopperGuiListener implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder(HopperRegistry.HopperPos pos))) {
+        if (!(event.getInventory().getHolder() instanceof HopperGui.HopperGuiHolder holder)) {
             return;
         }
+        HopperRegistry.HopperPos pos = holder.pos();
         HopperData data = registry.get(pos);
         if (data == null) {
-            registry.closeInventory(pos);
-            return;
+            Block block = event.getPlayer().getWorld().getBlockAt(pos.x(), pos.y(), pos.z());
+            data = HopperData.load(block);
+            if (data == null) {
+                data = new HopperData(block.getLocation());
+            }
         }
         Inventory top = event.getInventory();
+        String locale = HopperGui.localeFromInventory(top);
         if (!top.getViewers().isEmpty()) {
             return;
         }
@@ -254,7 +264,7 @@ final class HopperGuiListener implements Listener {
             upgrade = null;
         }
         if (upgrade != null) {
-            WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade));
+            WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade), locale);
         }
         if (upgrade != null && upgrade.getAmount() > 1) {
             ItemStack extra = upgrade.clone();
@@ -285,7 +295,7 @@ final class HopperGuiListener implements Listener {
         Block block = data.location().getBlock();
         data.save(block);
         HopperGui.writeStatus(top, data);
-        registry.closeInventory(pos);
+        registry.closeInventory(pos, player.getUniqueId());
     }
 
     private void toggleMode(Inventory inventory, HopperRegistry.HopperPos pos) {
@@ -294,7 +304,8 @@ final class HopperGuiListener implements Listener {
             return;
         }
         data.setWhitelist(!data.isWhitelist());
-        inventory.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data));
+        String locale = HopperGui.localeFromInventory(inventory);
+        inventory.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data, locale));
         HopperGui.writeStatus(inventory, data);
         data.save(data.location().getBlock());
     }
@@ -303,7 +314,14 @@ final class HopperGuiListener implements Listener {
         org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
             HopperData data = registry.get(pos);
             if (data == null) {
-                return;
+                org.bukkit.World world = inventory.getViewers().isEmpty()
+                    ? plugin.getServer().getWorlds().getFirst()
+                    : inventory.getViewers().getFirst().getWorld();
+                Block block = world.getBlockAt(pos.x(), pos.y(), pos.z());
+                data = HopperData.load(block);
+                if (data == null) {
+                    data = new HopperData(block.getLocation());
+                }
             }
             data.setBuffer(HopperGui.readBuffer(inventory));
 
@@ -312,7 +330,8 @@ final class HopperGuiListener implements Listener {
                 upgrade = null;
             }
             if (upgrade != null) {
-                WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade));
+                String locale = HopperGui.localeFromInventory(inventory);
+                WirelessItems.applyUpgradeLore(upgrade, WirelessItems.getUpgradeTier(upgrade), locale);
             }
             data.setUpgradeItem(HopperGui.cloneSingle(upgrade));
 
