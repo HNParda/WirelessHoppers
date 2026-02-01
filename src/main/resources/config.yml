@@ -6,3 +6,21 @@ resource-pack-required: false
 resource-pack-auto-on-join: true
 lang-default: "de"
 recipes-auto-unlock-on-join: true
+
+transfer:
+  default:
+    cooldown-ticks: 8
+    items-per-transfer: 1
+  upgrades:
+    iron:
+      cooldown-ticks: 6
+      items-per-transfer: 2
+    gold:
+      cooldown-ticks: 4
+      items-per-transfer: 4
+    diamond:
+      cooldown-ticks: 2
+      items-per-transfer: 8
+    netherite:
+      cooldown-ticks: 1
+      items-per-transfer: 16

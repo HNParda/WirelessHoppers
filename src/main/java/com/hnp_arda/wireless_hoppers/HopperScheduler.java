@@ -68,7 +68,7 @@ final class HopperScheduler implements Runnable {
             processHopper(data);
             syncToOpenGui(pos, data);
             UpgradeTier tier = data.upgradeTier();
-            int cooldown = tier == null ? 16 : tier.cooldownTicks();
+            int cooldown = tier == null ? TransferConfig.defaultCooldownTicks() : tier.cooldownTicks();
             nextTransferTick.put(pos, tickCounter + cooldown);
             processed++;
         }
@@ -91,7 +91,9 @@ final class HopperScheduler implements Runnable {
             registry.unregister(block);
             return;
         }
-        boolean changed = pullFromAdjacentHoppers(data);
+        boolean changed = pullFromAboveContainer(data);
+        changed |= pullFromMinecartInventory(data);
+        changed |= pullFromAdjacentHoppers(data);
         changed |= pickupGroundItems(data);
         changed |= transferBuffer(data);
         if (changed) {
@@ -150,7 +152,7 @@ final class HopperScheduler implements Runnable {
             return false;
         }
         Block targetBlock = data.location().getBlock();
-        int limit = data.upgradeTier() == null ? 1 : data.upgradeTier().itemsPerTransfer();
+        int limit = data.upgradeTier() == null ? TransferConfig.defaultItemsPerTransfer() : data.upgradeTier().itemsPerTransfer();
         int moved = 0;
         boolean changed = false;
         for (BlockFace face : HOPPER_PULL_FACES) {
@@ -210,6 +212,87 @@ final class HopperScheduler implements Runnable {
         return changed;
     }
 
+    private boolean pullFromAboveContainer(HopperData data) {
+        if (isBufferFull(data.buffer())) {
+            return false;
+        }
+        Block block = data.location().getBlock();
+        Block above = block.getRelative(BlockFace.UP);
+        if (!(above.getState() instanceof InventoryHolder holder)) {
+            return false;
+        }
+        Inventory inventory = holder.getInventory();
+        return pullFromInventory(data, inventory);
+    }
+
+    private boolean pullFromMinecartInventory(HopperData data) {
+        if (isBufferFull(data.buffer())) {
+            return false;
+        }
+        Block block = data.location().getBlock();
+        BoundingBox box = new BoundingBox(
+            block.getX() - 0.25, block.getY(), block.getZ() - 0.25,
+            block.getX() + 1.25, block.getY() + 2.5, block.getZ() + 1.25
+        );
+        for (org.bukkit.entity.Entity entity : block.getWorld().getNearbyEntities(box)) {
+            if (!(entity instanceof org.bukkit.entity.Minecart)) {
+                continue;
+            }
+            if (!(entity instanceof InventoryHolder holder)) {
+                continue;
+            }
+            if (entity.getLocation().getBlockX() != block.getX()
+                || entity.getLocation().getBlockZ() != block.getZ()) {
+                continue;
+            }
+            if (pullFromInventory(data, holder.getInventory())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean pullFromInventory(HopperData data, Inventory inventory) {
+        int limit = data.upgradeTier() == null ? TransferConfig.defaultItemsPerTransfer() : data.upgradeTier().itemsPerTransfer();
+        int moved = 0;
+        boolean changed = false;
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+            if (item == null || item.getType().isAir()) {
+                continue;
+            }
+            if (blockedByFilter(data, item)) {
+                continue;
+            }
+            int remaining = limit - moved;
+            if (remaining <= 0) {
+                break;
+            }
+            ItemStack toMove = item.clone();
+            if (toMove.getAmount() > remaining) {
+                toMove.setAmount(remaining);
+            }
+            ItemStack leftover = insertIntoBuffer(data.buffer(), toMove);
+            int inserted = toMove.getAmount() - (leftover == null ? 0 : leftover.getAmount());
+            if (inserted <= 0) {
+                break;
+            }
+            moved += inserted;
+            int newAmount = item.getAmount() - inserted;
+            if (newAmount <= 0) {
+                inventory.setItem(i, null);
+            } else {
+                item.setAmount(newAmount);
+                inventory.setItem(i, item);
+            }
+            changed = true;
+            if (moved >= limit || isBufferFull(data.buffer())) {
+                break;
+            }
+        }
+        return changed;
+    }
+
     private boolean transferBuffer(HopperData data) {
         HopperData.TargetInfo targetInfo = data.targetInfo();
         if (targetInfo == null) {
@@ -229,7 +312,7 @@ final class HopperScheduler implements Runnable {
             return false;
         }
         UpgradeTier tier = data.upgradeTier();
-        int limit = tier == null ? 1 : tier.itemsPerTransfer();
+        int limit = tier == null ? TransferConfig.defaultItemsPerTransfer() : tier.itemsPerTransfer();
         int moved = 0;
         ItemStack[] buffer = data.buffer();
         boolean changed = false;

@@ -123,7 +123,7 @@ final class WirelessHopperListener implements Listener {
         registry.unregister(block);
     }
 
-    @EventHandler
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) {
             return;
@@ -159,6 +159,14 @@ final class WirelessHopperListener implements Listener {
             event.setCancelled(true);
             event.getPlayer().sendMessage(Component.text(
                 Lang.tr(event.getPlayer(), "listener.use_no_permission"),
+                NamedTextColor.RED
+            ));
+            return;
+        }
+        if (!SimpleClaimSystemHook.canInteract(event.getPlayer(), block)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage(Component.text(
+                Lang.tr(event.getPlayer(), "listener.claim_no_access"),
                 NamedTextColor.RED
             ));
             return;

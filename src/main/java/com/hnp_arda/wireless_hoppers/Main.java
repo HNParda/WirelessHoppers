@@ -16,6 +16,7 @@ public final class Main extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        TransferConfig.load(this);
         Lang.init(this);
         Keys.init(this);
         storage = new HopperStorage(getDataFolder());

@@ -219,9 +219,9 @@ final class HopperGui {
             return List.of(
                 Component.text(Lang.tr(locale, "gui.upgrade.none"), NamedTextColor.GRAY),
                 Component.text(Lang.tr(locale, "gui.upgrade.cooldown",
-                    java.util.Map.of("ticks", String.valueOf(16))), NamedTextColor.GRAY),
+                    java.util.Map.of("ticks", String.valueOf(TransferConfig.defaultCooldownTicks()))), NamedTextColor.GRAY),
                 Component.text(Lang.tr(locale, "gui.upgrade.items_per",
-                    java.util.Map.of("count", String.valueOf(1))), NamedTextColor.GRAY)
+                    java.util.Map.of("count", String.valueOf(TransferConfig.defaultItemsPerTransfer()))), NamedTextColor.GRAY)
             );
         }
         return List.of(

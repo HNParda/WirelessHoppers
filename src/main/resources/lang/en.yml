@@ -50,6 +50,7 @@ listener:
   break_no_permission: "You don't have permission to break Wireless Hoppers."
   target_linked: "Linked target: {type}"
   use_no_permission: "You don't have permission to use Wireless Hoppers."
+  claim_no_access: "You can't use this in someone else's claim."
 items:
   hopper:
     name: "Wireless Hopper"
