@@ -1,5 +1,6 @@
 gui:
   title: "Wireless Hopper"
+  title_too_far: "Wireless Hopper (too far)"
   toggle:
     whitelist: "Whitelist Mode"
     blacklist: "Blacklist Mode"
@@ -24,6 +25,7 @@ gui:
   target:
     not_linked: "Not linked"
     coords: "x{X} y{Y} z{Z}"
+    too_far: "Target chunk not loaded"
 tool:
   linked: "Linked: {type}"
   coords: "x{X} y{Y} z{Z}"
@@ -46,6 +48,7 @@ command:
     invalid: "Unknown language. Use: auto, de, en."
 listener:
   place_no_permission: "You don't have permission to place Wireless Hoppers."
+  place_limit_reached: "You have reached the limit of {limit} Wireless Hoppers."
   place_reserved: "Bamboo mosaic slabs are reserved for Wireless Hoppers."
   break_no_permission: "You don't have permission to break Wireless Hoppers."
   target_linked: "Linked target: {type}"

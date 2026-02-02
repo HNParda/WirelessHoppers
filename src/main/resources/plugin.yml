@@ -15,6 +15,12 @@ permissions:
   wirelesshopper.give:
     description: Allows giving Wireless Hopper items.
     default: op
+  wirelesshopper.limit.unlimited:
+    description: Allows unlimited Wireless Hoppers per player.
+    default: false
+  wirelesshopper.limit.*:
+    description: Allows setting per-player limits with wirelesshopper.limit.<number>.
+    default: false
 
 commands:
   wirelesshopper:

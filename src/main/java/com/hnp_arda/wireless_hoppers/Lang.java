@@ -18,6 +18,7 @@ final class Lang {
     private static final Map<UUID, String> PLAYER_LOCALES = new HashMap<>();
     private static final Set<String> AVAILABLE_LOCALES = new HashSet<>();
     private static String defaultLocale = "de";
+    private static boolean defaultAuto = false;
     private static JavaPlugin plugin;
 
     private Lang() {
@@ -25,7 +26,9 @@ final class Lang {
 
     static void init(JavaPlugin plugin) {
         Lang.plugin = plugin;
-        defaultLocale = normalizeLocale(plugin.getConfig().getString("lang-default", "de"));
+        String configLocale = plugin.getConfig().getString("lang-default", "de");
+        defaultAuto = "auto".equalsIgnoreCase(configLocale);
+        defaultLocale = normalizeLocale(configLocale);
         loadLocale(plugin, "en");
         loadLocale(plugin, "de");
         loadPlayerLocales(plugin);
@@ -45,9 +48,15 @@ final class Lang {
         }
         String stored = PLAYER_LOCALES.get(player.getUniqueId());
         if (stored != null && !stored.isBlank()) {
+            if ("auto".equalsIgnoreCase(stored)) {
+                return normalizeLocale(player.getLocale());
+            }
             return stored;
         }
-        return normalizeLocale(player.getLocale());
+        if (defaultAuto) {
+            return normalizeLocale(player.getLocale());
+        }
+        return defaultLocale;
     }
 
     static String tr(Player player, String key) {
@@ -126,9 +135,15 @@ final class Lang {
             return;
         }
         String normalized = normalizeLocale(locale);
-        if (locale == null || locale.isBlank() || "auto".equalsIgnoreCase(locale)) {
+        if (locale == null || locale.isBlank()) {
             PLAYER_LOCALES.remove(playerId);
             plugin.getConfig().set("lang-players." + playerId, null);
+            plugin.saveConfig();
+            return;
+        }
+        if ("auto".equalsIgnoreCase(locale) || "auto".equalsIgnoreCase(normalized)) {
+            PLAYER_LOCALES.put(playerId, "auto");
+            plugin.getConfig().set("lang-players." + playerId, "auto");
             plugin.saveConfig();
             return;
         }

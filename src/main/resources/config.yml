@@ -1,11 +1,7 @@
-resource-pack-url: "https://drive.google.com/uc?export=download&id=1Z9SwvDNx4XPX19vh4mROcBtmFKUx8CeH"
-resource-pack-sha1: "11c2e776080e18dced471522c5d1b254bbf0788b"
-resource-pack-use-sha1: true
-resource-pack-prompt: "WirelessHopper Resource Pack"
-resource-pack-required: false
-resource-pack-auto-on-join: true
 lang-default: "de"
-recipes-auto-unlock-on-join: true
+
+limits:
+  max-hoppers-per-player: -1
 
 transfer:
   default:

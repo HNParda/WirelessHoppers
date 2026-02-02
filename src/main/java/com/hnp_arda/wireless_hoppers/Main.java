@@ -17,6 +17,7 @@ public final class Main extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         TransferConfig.load(this);
+        PlacementConfig.load(this);
         Lang.init(this);
         Keys.init(this);
         storage = new HopperStorage(getDataFolder());
@@ -25,7 +26,7 @@ public final class Main extends JavaPlugin implements Listener {
         registry = new HopperRegistry(storage);
         ItemIndex itemIndex = new ItemIndex();
         HopperScheduler scheduler = new HopperScheduler(registry, itemIndex);
-        resourcePackManager = new ResourcePackManager(this);
+        resourcePackManager = new ResourcePackManager();
 
         Bukkit.getPluginManager().registerEvents(new WirelessHopperListener(registry), this);
         Bukkit.getPluginManager().registerEvents(new HopperGuiListener(registry, this), this);
@@ -54,9 +55,6 @@ public final class Main extends JavaPlugin implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         if (getConfig().getBoolean("recipes-auto-unlock-on-join", true) && recipeManager != null) {
             event.getPlayer().discoverRecipes(recipeManager.recipeKeys());
-        }
-        if (!getConfig().getBoolean("resource-pack-auto-on-join", true)) {
-            return;
         }
         resourcePackManager.prompt(event.getPlayer());
     }

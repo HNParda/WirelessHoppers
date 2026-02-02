@@ -20,8 +20,10 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
 final class WirelessHopperListener implements Listener {
+    private static final String LIMIT_PREFIX = "wirelesshopper.limit.";
     private final HopperRegistry registry;
 
     WirelessHopperListener(HopperRegistry registry) {
@@ -44,8 +46,22 @@ final class WirelessHopperListener implements Listener {
                 ));
                 return;
             }
+            int limit = resolveLimit(event.getPlayer());
+            if (limit != -1) {
+                int count = registry.countOwnedBy(event.getPlayer().getUniqueId());
+                if (count >= limit) {
+                    event.setCancelled(true);
+                    event.getPlayer().sendMessage(Component.text(
+                        Lang.tr(event.getPlayer(), "listener.place_limit_reached",
+                            java.util.Map.of("limit", String.valueOf(limit))),
+                        NamedTextColor.RED
+                    ));
+                    return;
+                }
+            }
             WirelessHopperBlock.markWirelessHopper(block);
             HopperData data = new HopperData(block.getLocation());
+            data.setOwnerId(event.getPlayer().getUniqueId());
             data.save(block);
             return;
         }
@@ -254,5 +270,46 @@ final class WirelessHopperListener implements Listener {
         if (current != null && current.getType() == Material.BAMBOO_MOSAIC_SLAB && !WirelessItems.isWirelessHopper(current)) {
             event.setCancelled(true);
         }
+    }
+
+    private int resolveLimit(org.bukkit.entity.Player player) {
+        int configLimit = PlacementConfig.maxHoppersPerPlayer();
+        int permissionLimit = permissionLimit(player);
+        if (permissionLimit != Integer.MIN_VALUE) {
+            return permissionLimit;
+        }
+        return configLimit;
+    }
+
+    private int permissionLimit(org.bukkit.entity.Player player) {
+        if (player.hasPermission(LIMIT_PREFIX + "unlimited")) {
+            return -1;
+        }
+        int best = Integer.MIN_VALUE;
+        for (PermissionAttachmentInfo info : player.getEffectivePermissions()) {
+            if (!info.getValue()) {
+                continue;
+            }
+            String permission = info.getPermission();
+            if (!permission.startsWith(LIMIT_PREFIX)) {
+                continue;
+            }
+            String suffix = permission.substring(LIMIT_PREFIX.length());
+            if (suffix.equalsIgnoreCase("unlimited")) {
+                return -1;
+            }
+            try {
+                int value = Integer.parseInt(suffix);
+                if (value == -1) {
+                    return -1;
+                }
+                if (value >= 0 && value > best) {
+                    best = value;
+                }
+            } catch (NumberFormatException ignored) {
+                continue;
+            }
+        }
+        return best;
     }
 }

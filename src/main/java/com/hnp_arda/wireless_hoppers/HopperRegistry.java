@@ -31,6 +31,10 @@ final class HopperRegistry {
         return hoppers.get(pos);
     }
 
+    int countOwnedBy(UUID ownerId) {
+        return storage.countOwnedBy(ownerId);
+    }
+
     Inventory getOpenInventory(HopperPos pos) {
         Map<UUID, Inventory> byPlayer = openInventories.get(pos);
         if (byPlayer == null || byPlayer.isEmpty()) {
@@ -57,6 +61,11 @@ final class HopperRegistry {
         Map<UUID, Inventory> byPlayer = openInventories.computeIfAbsent(pos, ignored -> new HashMap<>());
         Inventory existing = byPlayer.get(player.getUniqueId());
         if (existing != null) {
+            if (!HopperGui.localeFromInventory(existing).equals(locale)) {
+                Inventory created = HopperGui.create(pos, data, locale);
+                byPlayer.put(player.getUniqueId(), created);
+                return created;
+            }
             HopperGui.writeBuffer(existing, data.buffer());
             HopperGui.writeFilters(existing, data.filters(), locale);
             ItemStack upgrade = HopperGui.cloneSingle(data.upgradeItem());

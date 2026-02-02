@@ -1,5 +1,6 @@
 gui:
   title: "Wireless Hopper"
+  title_too_far: "Wireless Hopper (zu weit)"
   toggle:
     whitelist: "Whitelist-Modus"
     blacklist: "Blacklist-Modus"
@@ -24,6 +25,7 @@ gui:
   target:
     not_linked: "Nicht verknüpft"
     coords: "x{X} y{Y} z{Z}"
+    too_far: "Ziel-Chunk nicht geladen"
 tool:
   linked: "Verbunden: {type}"
   coords: "x{X} y{Y} z{Z}"
@@ -46,6 +48,7 @@ command:
     invalid: "Unbekannte Sprache. Nutze: auto, de, en."
 listener:
   place_no_permission: "Du hast keine Berechtigung, Wireless Hoppers zu platzieren."
+  place_limit_reached: "Du hast das Limit von {limit} Wireless Hoppers erreicht."
   place_reserved: "Bamboo Mozaik Slabs sind für Wireless Hoppers reserviert."
   break_no_permission: "Du hast keine Berechtigung, Wireless Hoppers abzubauen."
   target_linked: "Ziel verknüpft: {type}"

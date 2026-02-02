@@ -108,6 +108,20 @@ final class HopperStorage {
         remove(block);
     }
 
+    int countOwnedBy(UUID ownerId) {
+        if (ownerId == null) {
+            return 0;
+        }
+        int count = 0;
+        for (byte[] payload : data.values()) {
+            UUID owner = HopperData.readOwnerId(payload);
+            if (ownerId.equals(owner)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private void index(HopperRegistry.HopperPos pos) {
         HopperRegistry.ChunkKey key = new HopperRegistry.ChunkKey(pos.worldId(), pos.x() >> 4, pos.z() >> 4);
         index.computeIfAbsent(key, ignored -> new HashSet<>()).add(pos);

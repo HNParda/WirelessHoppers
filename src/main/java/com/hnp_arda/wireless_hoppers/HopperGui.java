@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
@@ -145,8 +146,7 @@ final class HopperGui {
         List<ItemStack> items = new ArrayList<>();
         items.add(statusItem(Lang.tr(locale, "gui.status.upgrade"),
             upgradeLore(data, locale)));
-        items.add(statusItem(Lang.tr(locale, "gui.status.target"),
-            targetLore(data, locale)));
+        items.add(targetStatusItem(data, locale));
         items.add(statusItem(Lang.tr(locale, "gui.status.mode"),
             List.of(filterSummary(data, locale))));
         return items;
@@ -203,6 +203,18 @@ final class HopperGui {
         inventory.setItem(TOGGLE_SLOT, toggleItem(data, locale));
     }
 
+    private static boolean isTargetChunkUnavailable(HopperData data) {
+        HopperData.TargetInfo target = data.targetInfo();
+        if (target == null) {
+            return false;
+        }
+        World world = Bukkit.getWorld(target.worldId());
+        if (world == null) {
+            return true;
+        }
+        return !world.isChunkLoaded(target.x() >> 4, target.z() >> 4);
+    }
+
     private static Component filterSummary(HopperData data, String locale) {
         int count = countItems(data.filters());
         if (data.isWhitelist()) {
@@ -238,14 +250,27 @@ final class HopperGui {
         if (target == null) {
             return List.of(Component.text(Lang.tr(locale, "gui.target.not_linked"), NamedTextColor.GRAY));
         }
-        return List.of(
-                Component.text(target.inventoryType(), NamedTextColor.YELLOW),
-                Component.text(Lang.tr(locale, "gui.target.coords", java.util.Map.of(
-                    "X", String.valueOf(target.x()),
-                    "Y", String.valueOf(target.y()),
-                    "Z", String.valueOf(target.z())
-                )), NamedTextColor.GRAY)
-        );
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text(target.inventoryType(), NamedTextColor.YELLOW));
+        lore.add(Component.text(Lang.tr(locale, "gui.target.coords", java.util.Map.of(
+            "X", String.valueOf(target.x()),
+            "Y", String.valueOf(target.y()),
+            "Z", String.valueOf(target.z())
+        )), NamedTextColor.GRAY));
+        if (isTargetChunkUnavailable(data)) {
+            lore.add(Component.text(Lang.tr(locale, "gui.target.too_far"), NamedTextColor.RED));
+        }
+        return lore;
+    }
+
+    private static ItemStack targetStatusItem(HopperData data, String locale) {
+        ItemStack item = statusItem(Lang.tr(locale, "gui.status.target"), targetLore(data, locale));
+        if (isTargetChunkUnavailable(data)) {
+            ItemMeta meta = item.getItemMeta();
+            meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), "gui_warning"));
+            item.setItemMeta(meta);
+        }
+        return item;
     }
 
     private static int countItems(ItemStack[] items) {

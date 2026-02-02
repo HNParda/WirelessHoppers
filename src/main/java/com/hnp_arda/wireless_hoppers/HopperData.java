@@ -27,6 +27,7 @@ final class HopperData {
     private ItemStack targetItem;
     private boolean whitelist;
     private TargetInfo targetInfo;
+    private UUID ownerId;
 
     HopperData(Location location) {
         this.location = location;
@@ -88,8 +89,10 @@ final class HopperData {
                 throw new IllegalStateException("Invalid hopper data format");
             }
             int versionOrFilterCount = in.readInt();
+            int version = 0;
             int filterCount;
-            if (versionOrFilterCount == 1) {
+            if (versionOrFilterCount == 1 || versionOrFilterCount == 2) {
+                version = versionOrFilterCount;
                 filterCount = in.readInt();
             } else {
                 filterCount = versionOrFilterCount;
@@ -117,6 +120,16 @@ final class HopperData {
             hopperData.whitelist = in.readBoolean();
             String target = in.readUTF();
             hopperData.targetInfo = target.isEmpty() ? null : TargetInfo.fromString(target);
+            if (version >= 2) {
+                String owner = in.readUTF();
+                if (!owner.isEmpty()) {
+                    try {
+                        hopperData.ownerId = UUID.fromString(owner);
+                    } catch (IllegalArgumentException ignored) {
+                        hopperData.ownerId = null;
+                    }
+                }
+            }
             return hopperData;
         } catch (IOException ex) {
             throw new IllegalStateException("Failed to deserialize hopper data", ex);
@@ -155,6 +168,10 @@ final class HopperData {
         return targetInfo;
     }
 
+    UUID ownerId() {
+        return ownerId;
+    }
+
     void setBuffer(ItemStack[] buffer) {
         this.buffer = buffer;
     }
@@ -169,6 +186,10 @@ final class HopperData {
 
     void setTargetInfo(TargetInfo targetInfo) {
         this.targetInfo = targetInfo;
+    }
+
+    void setOwnerId(UUID ownerId) {
+        this.ownerId = ownerId;
     }
 
     UpgradeTier upgradeTier() {
@@ -191,7 +212,7 @@ final class HopperData {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(outputStream)) {
             out.writeInt(MAGIC);
-            out.writeInt(1);
+            out.writeInt(2);
             out.writeInt(filters.length);
             for (ItemStack item : filters) {
                 writeItemStack(out, item);
@@ -204,6 +225,7 @@ final class HopperData {
             writeItemStack(out, targetItem);
             out.writeBoolean(whitelist);
             out.writeUTF(targetInfo == null ? "" : targetInfo.toString());
+            out.writeUTF(ownerId == null ? "" : ownerId.toString());
             out.flush();
             return outputStream.toByteArray();
         } catch (IOException ex) {
@@ -240,6 +262,67 @@ final class HopperData {
         try {
             return ItemStack.deserializeBytes(bytes);
         } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static void skipItemStack(DataInputStream in) throws IOException {
+        int length = in.readInt();
+        if (length <= 0) {
+            return;
+        }
+        if (length > 2_000_000) {
+            in.skipBytes(length);
+            return;
+        }
+        in.skipBytes(length);
+    }
+
+    static UUID readOwnerId(byte[] data) {
+        if (data == null || data.length == 0) {
+            return null;
+        }
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+             DataInputStream in = new DataInputStream(inputStream)) {
+            int magic = in.readInt();
+            if (magic != MAGIC) {
+                return null;
+            }
+            int versionOrFilterCount = in.readInt();
+            int version = 0;
+            int filterCount;
+            if (versionOrFilterCount == 1 || versionOrFilterCount == 2) {
+                version = versionOrFilterCount;
+                filterCount = in.readInt();
+            } else {
+                filterCount = versionOrFilterCount;
+            }
+            if (filterCount < 0 || filterCount > FILTER_SLOTS) {
+                return null;
+            }
+            for (int i = 0; i < filterCount; i++) {
+                skipItemStack(in);
+            }
+            int bufferCount = in.readInt();
+            if (bufferCount < 0 || bufferCount > BUFFER_SLOTS) {
+                return null;
+            }
+            for (int i = 0; i < bufferCount; i++) {
+                skipItemStack(in);
+            }
+            skipItemStack(in);
+            skipItemStack(in);
+            in.readBoolean();
+            in.readUTF();
+            if (version >= 2) {
+                String owner = in.readUTF();
+                if (owner.isEmpty()) {
+                    return null;
+                }
+                return UUID.fromString(owner);
+            }
+            return null;
+        } catch (IOException | IllegalArgumentException ex) {
             return null;
         }
     }

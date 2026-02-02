@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "wirelesshopper:item/gui_warning"
+  }
+}

@@ -2,39 +2,22 @@ package com.hnp_arda.wireless_hoppers;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HexFormat;
 
 final class ResourcePackManager {
-    private final JavaPlugin plugin;
 
-    ResourcePackManager(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
+    final String URL = "https://download.mc-packs.net/pack/c31012a18e00071920d36576cd7bb4bd2da8d2aa.zip";
+    final String HASH = "c31012a18e00071920d36576cd7bb4bd2da8d2aa";
 
-    private static byte[] hexToBytes(String hex) {
-        return HexFormat.of().parseHex(hex);
+    byte[] hash;
+
+    ResourcePackManager() {
+        hash = HexFormat.of().parseHex(HASH);
     }
 
     void prompt(Player player) {
-        String url = plugin.getConfig().getString("resource-pack-url", "");
-        if (url.isBlank()) {
-            player.sendMessage(Component.text(
-                    Lang.tr(player, "resourcepack.missing_url"),
-                    net.kyori.adventure.text.format.NamedTextColor.RED
-            ));
-            return;
-        }
-        String hash = plugin.getConfig().getString("resource-pack-sha1", "");
-        boolean required = plugin.getConfig().getBoolean("resource-pack-required", false);
-        boolean useSha1 = plugin.getConfig().getBoolean("resource-pack-use-sha1", true);
-        String prompt = plugin.getConfig().getString("resource-pack-prompt", "WirelessHopper Resource Pack");
-        if (!useSha1 || hash.isBlank()) {
-            player.setResourcePack(url, null, Component.text(prompt), required);
-        } else {
-            player.setResourcePack(url, hexToBytes(hash), Component.text(prompt), required);
-        }
+        player.setResourcePack(URL, hash, Component.text("WirelessHopper Resource Pack"), true);
     }
 
 }
