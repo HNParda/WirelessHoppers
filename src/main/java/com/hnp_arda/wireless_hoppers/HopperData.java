@@ -28,12 +28,14 @@ final class HopperData {
     private boolean whitelist;
     private TargetInfo targetInfo;
     private UUID ownerId;
+    private RedstoneMode redstoneMode;
 
     HopperData(Location location) {
         this.location = location;
         this.filters = new ItemStack[FILTER_SLOTS];
         this.buffer = new ItemStack[BUFFER_SLOTS];
         this.whitelist = false;
+        this.redstoneMode = RedstoneMode.IGNORED;
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -91,7 +93,7 @@ final class HopperData {
             int versionOrFilterCount = in.readInt();
             int version = 0;
             int filterCount;
-            if (versionOrFilterCount == 1 || versionOrFilterCount == 2) {
+            if (versionOrFilterCount == 1 || versionOrFilterCount == 2 || versionOrFilterCount == 3) {
                 version = versionOrFilterCount;
                 filterCount = in.readInt();
             } else {
@@ -129,6 +131,10 @@ final class HopperData {
                         hopperData.ownerId = null;
                     }
                 }
+            }
+            if (version >= 3) {
+                String mode = in.readUTF();
+                hopperData.redstoneMode = parseRedstoneMode(mode);
             }
             return hopperData;
         } catch (IOException ex) {
@@ -168,8 +174,8 @@ final class HopperData {
         return targetInfo;
     }
 
-    UUID ownerId() {
-        return ownerId;
+    RedstoneMode redstoneMode() {
+        return redstoneMode;
     }
 
     void setBuffer(ItemStack[] buffer) {
@@ -186,6 +192,10 @@ final class HopperData {
 
     void setTargetInfo(TargetInfo targetInfo) {
         this.targetInfo = targetInfo;
+    }
+
+    void setRedstoneMode(RedstoneMode redstoneMode) {
+        this.redstoneMode = redstoneMode == null ? RedstoneMode.IGNORED : redstoneMode;
     }
 
     void setOwnerId(UUID ownerId) {
@@ -212,7 +222,7 @@ final class HopperData {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
              DataOutputStream out = new DataOutputStream(outputStream)) {
             out.writeInt(MAGIC);
-            out.writeInt(2);
+            out.writeInt(3);
             out.writeInt(filters.length);
             for (ItemStack item : filters) {
                 writeItemStack(out, item);
@@ -226,6 +236,7 @@ final class HopperData {
             out.writeBoolean(whitelist);
             out.writeUTF(targetInfo == null ? "" : targetInfo.toString());
             out.writeUTF(ownerId == null ? "" : ownerId.toString());
+            out.writeUTF(redstoneMode == null ? RedstoneMode.IGNORED.name() : redstoneMode.name());
             out.flush();
             return outputStream.toByteArray();
         } catch (IOException ex) {
@@ -291,7 +302,7 @@ final class HopperData {
             int versionOrFilterCount = in.readInt();
             int version = 0;
             int filterCount;
-            if (versionOrFilterCount == 1 || versionOrFilterCount == 2) {
+            if (versionOrFilterCount == 1 || versionOrFilterCount == 2 || versionOrFilterCount == 3) {
                 version = versionOrFilterCount;
                 filterCount = in.readInt();
             } else {
@@ -324,6 +335,17 @@ final class HopperData {
             return null;
         } catch (IOException | IllegalArgumentException ex) {
             return null;
+        }
+    }
+
+    private static RedstoneMode parseRedstoneMode(String value) {
+        if (value == null || value.isBlank()) {
+            return RedstoneMode.IGNORED;
+        }
+        try {
+            return RedstoneMode.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return RedstoneMode.IGNORED;
         }
     }
 

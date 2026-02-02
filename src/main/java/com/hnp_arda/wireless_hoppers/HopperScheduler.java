@@ -91,6 +91,9 @@ final class HopperScheduler implements Runnable {
             registry.unregister(block);
             return;
         }
+        if (isRedstoneBlocked(data, block)) {
+            return;
+        }
         boolean changed = pullFromAboveContainer(data);
         changed |= pullFromMinecartInventory(data);
         changed |= pullFromAdjacentHoppers(data);
@@ -402,5 +405,14 @@ final class HopperScheduler implements Runnable {
             }
         }
         return data.isWhitelist() != match;
+    }
+
+    private boolean isRedstoneBlocked(HopperData data, Block block) {
+        RedstoneMode mode = data.redstoneMode();
+        if (mode == null || mode == RedstoneMode.IGNORED) {
+            return false;
+        }
+        boolean powered = block.getBlockPower() > 0;
+        return (mode == RedstoneMode.LOW) == powered;
     }
 }

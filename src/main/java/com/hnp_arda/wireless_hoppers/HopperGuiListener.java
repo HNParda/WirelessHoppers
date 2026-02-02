@@ -53,6 +53,12 @@ final class HopperGuiListener implements Listener {
             return;
         }
 
+        if (rawSlot == HopperGui.REDSTONE_SLOT) {
+            event.setCancelled(true);
+            toggleRedstone(event.getInventory(), pos);
+            return;
+        }
+
         if (rawSlot == HopperGui.UPGRADE_SLOT) {
             handleUpgradeSlot(event, pos, data);
             return;
@@ -306,6 +312,22 @@ final class HopperGuiListener implements Listener {
         data.setWhitelist(!data.isWhitelist());
         String locale = HopperGui.localeFromInventory(inventory);
         inventory.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data, locale));
+        HopperGui.writeStatus(inventory, data);
+        data.save(data.location().getBlock());
+    }
+
+    private void toggleRedstone(Inventory inventory, HopperRegistry.HopperPos pos) {
+        HopperData data = registry.get(pos);
+        if (data == null) {
+            return;
+        }
+        RedstoneMode mode = data.redstoneMode();
+        if (mode == null) {
+            mode = RedstoneMode.IGNORED;
+        }
+        data.setRedstoneMode(mode.next());
+        String locale = HopperGui.localeFromInventory(inventory);
+        inventory.setItem(HopperGui.REDSTONE_SLOT, HopperGui.redstoneToggleItem(data, locale));
         HopperGui.writeStatus(inventory, data);
         data.save(data.location().getBlock());
     }

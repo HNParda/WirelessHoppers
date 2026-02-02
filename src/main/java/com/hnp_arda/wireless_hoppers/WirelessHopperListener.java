@@ -199,6 +199,12 @@ final class WirelessHopperListener implements Listener {
         if (registry.get(pos) == null) {
             registry.register(block);
         }
+        if (data.targetInfo() != null && HopperGui.isTargetInvalid(data)) {
+            event.getPlayer().sendMessage(Component.text(
+                Lang.tr(event.getPlayer(), "listener.target_invalid"),
+                NamedTextColor.RED
+            ));
+        }
         event.getPlayer().openInventory(registry.openInventory(event.getPlayer(), pos, data));
         event.setCancelled(true);
     }
@@ -219,7 +225,13 @@ final class WirelessHopperListener implements Listener {
     public void onRedstone(BlockRedstoneEvent event) {
         Block block = event.getBlock();
         if (WirelessHopperBlock.isWirelessHopper(block)) {
-            event.setNewCurrent(0);
+            HopperData data = registry.get(HopperRegistry.HopperPos.fromBlock(block));
+            if (data == null) {
+                data = HopperData.load(block);
+            }
+            if (data == null || data.redstoneMode() == RedstoneMode.IGNORED) {
+                event.setNewCurrent(0);
+            }
         }
     }
 
@@ -307,7 +319,6 @@ final class WirelessHopperListener implements Listener {
                     best = value;
                 }
             } catch (NumberFormatException ignored) {
-                continue;
             }
         }
         return best;

@@ -22,11 +22,16 @@ final class HopperGui {
     static final int BUFFER_END = 8;
     static final int FILTER_START = 9;
     static final int FILTER_END = 35;
-    static final int UPGRADE_SLOT = 36;
-    static final int TARGET_SLOT = 40;
-    static final int TOGGLE_SLOT = 44;
+    static final int UPGRADE_SLOT = 37;
+    static final int TARGET_SLOT = 39;
+    static final int TOGGLE_SLOT = 41;
+    static final int REDSTONE_SLOT = 43;
     static final int STATUS_START = 45;
     static final int STATUS_END = 53;
+    static final int UPGRADE_INFO_SLOT = 46;
+    static final int TARGET_INFO_SLOT = 48;
+    static final int MODE_INFO_SLOT = 50;
+    static final int REDSTONE_INFO_SLOT = 52;
 
     private HopperGui() {
     }
@@ -48,10 +53,11 @@ final class HopperGui {
         inventory.setItem(UPGRADE_SLOT, upgrade);
         inventory.setItem(TARGET_SLOT, cloneSingle(data.targetItem()));
         inventory.setItem(TOGGLE_SLOT, toggleItem(data, locale));
+        inventory.setItem(REDSTONE_SLOT, redstoneToggleItem(data, locale));
 
         ItemStack filler = fillerItem(Component.text(" ", NamedTextColor.DARK_GRAY));
         for (int i = BUFFER_END + 1; i < STATUS_START; i++) {
-            if (i == UPGRADE_SLOT || i == TARGET_SLOT || i == TOGGLE_SLOT) {
+            if (i == UPGRADE_SLOT || i == TARGET_SLOT || i == REDSTONE_SLOT || i == TOGGLE_SLOT) {
                 continue;
             }
             inventory.setItem(i, filler);
@@ -149,6 +155,8 @@ final class HopperGui {
         items.add(targetStatusItem(data, locale));
         items.add(statusItem(Lang.tr(locale, "gui.status.mode"),
             List.of(filterSummary(data, locale))));
+        items.add(statusItem(Lang.tr(locale, "gui.status.redstone"),
+            List.of(redstoneSummary(data, locale))));
         return items;
     }
 
@@ -192,15 +200,19 @@ final class HopperGui {
         }
         List<ItemStack> statusItems = statusItems(data, locale);
         if (!statusItems.isEmpty()) {
-            inventory.setItem(45, statusItems.getFirst());
+            inventory.setItem(UPGRADE_INFO_SLOT, statusItems.getFirst());
         }
         if (statusItems.size() > 1) {
-            inventory.setItem(49, statusItems.get(1));
+            inventory.setItem(TARGET_INFO_SLOT, statusItems.get(1));
         }
         if (statusItems.size() > 2) {
-            inventory.setItem(53, statusItems.get(2));
+            inventory.setItem(MODE_INFO_SLOT, statusItems.get(2));
+        }
+        if (statusItems.size() > 3) {
+            inventory.setItem(REDSTONE_INFO_SLOT, statusItems.get(3));
         }
         inventory.setItem(TOGGLE_SLOT, toggleItem(data, locale));
+        inventory.setItem(REDSTONE_SLOT, redstoneToggleItem(data, locale));
     }
 
     private static boolean isTargetChunkUnavailable(HopperData data) {
@@ -213,6 +225,25 @@ final class HopperGui {
             return true;
         }
         return !world.isChunkLoaded(target.x() >> 4, target.z() >> 4);
+    }
+
+    static boolean isTargetInvalid(HopperData data) {
+        HopperData.TargetInfo target = data.targetInfo();
+        if (target == null) {
+            return false;
+        }
+        World world = Bukkit.getWorld(target.worldId());
+        if (world == null) {
+            return true;
+        }
+        if (!world.isChunkLoaded(target.x() >> 4, target.z() >> 4)) {
+            return false;
+        }
+        org.bukkit.block.BlockState state = target.toLocation(world).getBlock().getState();
+        if (!(state instanceof InventoryHolder holder)) {
+            return true;
+        }
+        return !holder.getInventory().getType().name().equalsIgnoreCase(target.inventoryType());
     }
 
     private static Component filterSummary(HopperData data, String locale) {
@@ -257,6 +288,10 @@ final class HopperGui {
             "Y", String.valueOf(target.y()),
             "Z", String.valueOf(target.z())
         )), NamedTextColor.GRAY));
+        if (isTargetInvalid(data)) {
+            lore.add(Component.text(Lang.tr(locale, "gui.target.invalid"), NamedTextColor.RED));
+            return lore;
+        }
         if (isTargetChunkUnavailable(data)) {
             lore.add(Component.text(Lang.tr(locale, "gui.target.too_far"), NamedTextColor.RED));
         }
@@ -265,12 +300,55 @@ final class HopperGui {
 
     private static ItemStack targetStatusItem(HopperData data, String locale) {
         ItemStack item = statusItem(Lang.tr(locale, "gui.status.target"), targetLore(data, locale));
-        if (isTargetChunkUnavailable(data)) {
+        if (isTargetChunkUnavailable(data) || isTargetInvalid(data)) {
             ItemMeta meta = item.getItemMeta();
             meta.setItemModel(new org.bukkit.NamespacedKey(Keys.BLOCK_MARKER.getNamespace(), "gui_warning"));
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    private static Component redstoneSummary(HopperData data, String locale) {
+        RedstoneMode mode = data.redstoneMode();
+        if (mode == null) {
+            mode = RedstoneMode.IGNORED;
+        }
+        NamedTextColor color = redstoneColor(mode);
+        return Component.text(Lang.tr(locale, mode.summaryKey()), color);
+    }
+
+    static ItemStack redstoneToggleItem(HopperData data, String locale) {
+        RedstoneMode mode = data.redstoneMode();
+        if (mode == null) {
+            mode = RedstoneMode.IGNORED;
+        }
+        Material material = switch (mode) {
+            case LOW -> Material.REDSTONE;
+            case HIGH -> Material.REDSTONE_BLOCK;
+            case IGNORED -> Material.GRAY_DYE;
+        };
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        NamedTextColor color = redstoneColor(mode);
+        meta.displayName(Component.text(
+            Lang.tr(locale, "gui.redstone.title",
+                java.util.Map.of("mode", Lang.tr(locale, mode.labelKey()))),
+            color
+        ));
+        meta.lore(List.of(
+            Component.text(Lang.tr(locale, "gui.redstone.click"), NamedTextColor.GRAY),
+            Component.text(Lang.tr(locale, mode.summaryKey()), color)
+        ));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private static NamedTextColor redstoneColor(RedstoneMode mode) {
+        return switch (mode) {
+            case LOW -> NamedTextColor.GOLD;
+            case HIGH -> NamedTextColor.RED;
+            case IGNORED -> NamedTextColor.GRAY;
+        };
     }
 
     private static int countItems(ItemStack[] items) {

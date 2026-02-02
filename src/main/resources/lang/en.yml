@@ -18,6 +18,7 @@ gui:
     upgrade: "Upgrade"
     target: "Target"
     mode: "Mode"
+    redstone: "Redstone"
   upgrade:
     none: "No upgrade installed"
     cooldown: "Cooldown: {ticks} ticks"
@@ -26,6 +27,16 @@ gui:
     not_linked: "Not linked"
     coords: "x{X} y{Y} z{Z}"
     too_far: "Target chunk not loaded"
+    invalid: "Target is invalid"
+  redstone:
+    title: "Redstone: {mode}"
+    click: "Click to toggle"
+    low: "Low"
+    high: "High"
+    ignored: "Ignored"
+    low_summary: "Active without redstone"
+    high_summary: "Active with redstone"
+    ignored_summary: "Redstone ignored"
 tool:
   linked: "Linked: {type}"
   coords: "x{X} y{Y} z{Z}"
@@ -52,6 +63,7 @@ listener:
   place_reserved: "Bamboo mosaic slabs are reserved for Wireless Hoppers."
   break_no_permission: "You don't have permission to break Wireless Hoppers."
   target_linked: "Linked target: {type}"
+  target_invalid: "Target is invalid."
   use_no_permission: "You don't have permission to use Wireless Hoppers."
   claim_no_access: "You can't use this in someone else's claim."
 items:
@@ -69,7 +81,7 @@ items:
       insert: "Insert into target slot"
 upgrade:
   tier:
-    iron: "Iron Upgrade"
-    gold: "Gold Upgrade"
-    diamond: "Diamond Upgrade"
-    netherite: "Netherite Upgrade"
+    iron: "Iron Hopper Upgrade"
+    gold: "Gold Hopper Upgrade"
+    diamond: "Diamond Hopper Upgrade"
+    netherite: "Netherite Hopper Upgrade"

@@ -18,6 +18,7 @@ gui:
     upgrade: "Upgrade"
     target: "Ziel"
     mode: "Modus"
+    redstone: "Redstone"
   upgrade:
     none: "Kein Upgrade installiert"
     cooldown: "Cooldown: {ticks} Ticks"
@@ -26,6 +27,16 @@ gui:
     not_linked: "Nicht verknüpft"
     coords: "x{X} y{Y} z{Z}"
     too_far: "Ziel-Chunk nicht geladen"
+    invalid: "Ziel ist ungültig"
+  redstone:
+    title: "Redstone: {mode}"
+    click: "Klicken zum Umschalten"
+    low: "Low"
+    high: "High"
+    ignored: "Ignoriert"
+    low_summary: "Aktiv ohne Redstone"
+    high_summary: "Aktiv mit Redstone"
+    ignored_summary: "Redstone ignoriert"
 tool:
   linked: "Verbunden: {type}"
   coords: "x{X} y{Y} z{Z}"
@@ -52,6 +63,7 @@ listener:
   place_reserved: "Bamboo Mozaik Slabs sind für Wireless Hoppers reserviert."
   break_no_permission: "Du hast keine Berechtigung, Wireless Hoppers abzubauen."
   target_linked: "Ziel verknüpft: {type}"
+  target_invalid: "Ziel ist ungültig."
   use_no_permission: "Du hast keine Berechtigung, Wireless Hoppers zu benutzen."
   claim_no_access: "Du kannst das nicht in fremden Claims benutzen."
 items:

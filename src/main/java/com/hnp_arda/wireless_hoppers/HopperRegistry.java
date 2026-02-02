@@ -76,6 +76,7 @@ final class HopperRegistry {
             existing.setItem(HopperGui.UPGRADE_SLOT, upgrade);
             existing.setItem(HopperGui.TARGET_SLOT, HopperGui.cloneSingle(data.targetItem()));
             existing.setItem(HopperGui.TOGGLE_SLOT, HopperGui.toggleItem(data, locale));
+            existing.setItem(HopperGui.REDSTONE_SLOT, HopperGui.redstoneToggleItem(data, locale));
             HopperGui.writeStatus(existing, data);
             return existing;
         }
