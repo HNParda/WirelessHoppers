@@ -6,7 +6,7 @@ plugins {
 import java.security.MessageDigest
 
 group = 'com.hnp-arda.wireless_hoppers'
-version = '1.9'
+version = '2.0'
 
 repositories {
     mavenCentral()

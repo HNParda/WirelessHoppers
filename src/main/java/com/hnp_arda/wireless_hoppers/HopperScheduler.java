@@ -390,7 +390,7 @@ final class HopperScheduler implements Runnable {
     }
 
     private boolean blockedByFilter(HopperData data, ItemStack stack) {
-        if (HopperData.isEmpty(data.filters())) {
+        if (!data.isWhitelist() && HopperData.isEmpty(data.filters())) {
             return false;
         }
         boolean strict = data.hasStrictMatch();

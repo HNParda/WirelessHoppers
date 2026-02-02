@@ -47,22 +47,22 @@ final class RecipeManager {
                 new Ingredient('E', new RecipeChoice.MaterialChoice(Material.ENDER_PEARL)),
                 new Ingredient('C', new RecipeChoice.MaterialChoice(Material.COMPASS)));
 
-        registerNetheriteSmithing();
+        registerNetheriteUpgrade();
+
+    }
+
+    private void registerNetheriteUpgrade() {
+        NamespacedKey namespacedKey = new NamespacedKey(plugin, "wireless_upgrade_netherite");
+        ShapelessRecipe recipe = new ShapelessRecipe(namespacedKey, WirelessItems.createUpgradeItem(UpgradeTier.NETHERITE));
+        recipe.addIngredient(new RecipeChoice.ExactChoice(WirelessItems.createUpgradeItem(UpgradeTier.DIAMOND)));
+        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE));
+        recipe.addIngredient(new RecipeChoice.MaterialChoice(Material.NETHERITE_INGOT));
+        Bukkit.addRecipe(recipe);
+        recipeKeys.add(namespacedKey);
     }
 
     java.util.List<NamespacedKey> recipeKeys() {
         return java.util.List.copyOf(recipeKeys);
-    }
-
-    private void registerNetheriteSmithing() {
-        NamespacedKey key = new NamespacedKey(plugin, "wireless_upgrade_netherite_smithing");
-        ItemStack result = WirelessItems.createUpgradeItem(UpgradeTier.NETHERITE);
-        RecipeChoice template = new RecipeChoice.MaterialChoice(Material.NETHERITE_UPGRADE_SMITHING_TEMPLATE);
-        RecipeChoice base = new RecipeChoice.ExactChoice(WirelessItems.createUpgradeItem(UpgradeTier.DIAMOND));
-        RecipeChoice addition = new RecipeChoice.MaterialChoice(Material.NETHERITE_INGOT);
-        SmithingTransformRecipe recipe = new SmithingTransformRecipe(key, result, template, base, addition);
-        Bukkit.addRecipe(recipe);
-        recipeKeys.add(key);
     }
 
     private void removeVanillaSlabRecipes() {
