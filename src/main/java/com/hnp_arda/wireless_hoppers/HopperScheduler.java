@@ -335,8 +335,9 @@ final class HopperScheduler implements Runnable {
             if (toMove.getAmount() > remainingCapacity) {
                 toMove.setAmount(remainingCapacity);
             }
+            int attempted = toMove.getAmount();
             Map<Integer, ItemStack> leftovers = targetInventory.addItem(toMove);
-            int inserted = toMove.getAmount();
+            int inserted = attempted;
             if (!leftovers.isEmpty()) {
                 inserted -= leftovers.values().iterator().next().getAmount();
             }
