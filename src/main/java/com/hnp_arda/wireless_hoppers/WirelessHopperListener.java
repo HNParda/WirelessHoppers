@@ -120,11 +120,6 @@ final class WirelessHopperListener implements Listener {
                     block.getWorld().dropItemNaturally(block.getLocation(), item);
                 }
             }
-            for (ItemStack item : data.filters()) {
-                if (item != null && !item.getType().isAir()) {
-                    block.getWorld().dropItemNaturally(block.getLocation(), item);
-                }
-            }
             if (data.upgradeItem() != null) {
                 block.getWorld().dropItemNaturally(block.getLocation(), data.upgradeItem());
             }
